@@ -1,0 +1,399 @@
+# Schéma de la Base de Données Supabase pour Zeurk
+
+**Date de la dernière mise à jour :** 2024-07-28
+
+Ce document détaille la structure de la base de données requise pour l'application Zeurk, basée sur l'analyse des écrans existants. L'objectif est de garantir une organisation claire, une efficacité des requêtes et une gestion robuste des relations.
+
+---
+
+## Vue d'Ensemble des Relations (Diagramme ER - Mermaid)
+
+```mermaid
+erDiagram
+    "auth.users" ||--o{ profiles : "1:1"
+    profiles ||--o{ drivers : "1:1"
+    profiles ||--o{ rides : "1:N" : client
+    drivers ||--o{ rides : "1:N" : driver
+    profiles ||--o{ payment_methods : "1:N"
+    profiles ||--o{ ratings : "1:N" : rater
+    drivers ||--o{ ratings : "1:N" : rated
+    profiles ||--o{ messages : "1:N" : sender
+    profiles ||--o{ messages : "1:N" : receiver
+    profiles ||--o{ support_tickets : "1:N"
+    profiles ||--o{ user_addresses : "1:N"
+    rides ||--o{ stops : "1:N"
+    rides ||--o| payments : "1:1"
+    rides ||--o{ messages : "1:N"
+    drivers ||--o{ driver_locations : "1:N"
+    drivers ||--o{ payment_methods : "1:N" : preferred_payout_method
+    ride_options_catalog }|--|| rides : "N:1"
+    support_tickets ||--o{ support_messages : "1:N"
+```
+
+---
+
+## 1. Gestion des Utilisateurs et Chauffeurs
+
+### 1.1. `profiles`
+- **But** : Table centrale contenant les informations de base pour tous les utilisateurs (clients et chauffeurs), liée à l'authentification Supabase.
+- **Colonnes** :
+  - `id` (UUID, Primary Key, REFERENCES `auth.users(id)` ON DELETE CASCADE)
+  - `full_name` (TEXT, NOT NULL)
+  - `email` (TEXT, UNIQUE, NOT NULL)
+  - `phone_number` (TEXT, UNIQUE, NOT NULL)
+  - `avatar_url` (TEXT, nullable)
+  - `user_type` (TEXT, CHECK (user_type IN ('client', 'driver')), NOT NULL, DEFAULT 'client')
+  - `default_city` (TEXT, nullable)
+  - `last_known_location_lat` (DECIMAL(10,8), nullable)
+  - `last_known_location_lng` (DECIMAL(11,8), nullable)
+  - `created_at` (TIMESTAMPTZ, NOT NULL, DEFAULT `now()`)
+  - `updated_at` (TIMESTAMPTZ, NOT NULL, DEFAULT `now()`)
+- **Relations :**
+  - **1:1** avec `auth.users` (via `id`)
+  - **1:1** avec `drivers` (via `id`)
+  - **1:N** avec `rides` (comme `client_id`)
+  - **1:N** avec `payment_methods` (via `user_id`)
+  - **1:N** avec `ratings` (comme `rater_id`)
+  - **1:N** avec `messages` (comme `sender_id` ou `receiver_id`)
+  - **1:N** avec `support_tickets` (via `user_id` ou `assigned_to`)
+  - **1:N** avec `user_addresses` (via `user_id`)
+- **Indexes :** `(email)`, `(phone_number)`, `(user_type)`
+
+### 1.2. `drivers`
+- **But** : Informations spécifiques aux profils de type 'driver'.
+- **Colonnes** :
+  - `id` (UUID, Primary Key, REFERENCES `profiles(id)` ON DELETE CASCADE)
+  - `license_number` (TEXT, UNIQUE, NOT NULL)
+  - `is_verified` (BOOLEAN, NOT NULL, DEFAULT `false`)
+  - `is_available` (BOOLEAN, NOT NULL, DEFAULT `false`)
+  - `rating` (DECIMAL(3,2), NOT NULL, DEFAULT `5.00`)
+  - `total_rides` (INTEGER, NOT NULL, DEFAULT `0`)
+  - `car_make` (TEXT, nullable)
+  - `car_model` (TEXT, nullable)
+  - `car_color` (TEXT, nullable)
+  - `vehicle_plate` (TEXT, UNIQUE, NOT NULL)
+  - `car_image_url` (TEXT, nullable)
+  - `preferred_payout_method_id` (UUID, nullable, REFERENCES `payment_methods(id)` ON DELETE SET NULL)
+  - `created_at` (TIMESTAMPTZ, NOT NULL, DEFAULT `now()`)
+  - `updated_at` (TIMESTAMPTZ, NOT NULL, DEFAULT `now()`)
+- **Relations :**
+  - **1:1** avec `profiles` (via `id`)
+  - **1:N** avec `rides` (comme `driver_id`)
+  - **1:N** avec `ratings` (comme `rated_driver_id`)
+  - **1:N** avec `driver_locations` (via `driver_id`)
+  - **N:1** avec `payment_methods` (via `preferred_payout_method_id`)
+- **Indexes :** `(is_available)`, `(rating)`, `(vehicle_plate)`, `(preferred_payout_method_id)`
+
+### 1.3. Opérations d'API pour le Profil
+- **But** : Décrire les interactions courantes entre le frontend (pages `ProfileScreen` et `ProfileModal`) et le backend Supabase pour la gestion du profil utilisateur.
+
+#### 1.3.1. Récupération du Profil Utilisateur
+  - **Description** : Permet de charger les informations complètes du profil de l'utilisateur actuellement connecté.
+  - **Méthode** : Requête SELECT sur la table `profiles` filtrée par l'`id` de l'utilisateur authentifié.
+  - **Exemple de Pseudocode (Backend Function)** :
+    ```javascript
+    // Exemple conceptuel de fonction Edge/Serverless
+    async function fetchUserProfile(userId) {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, phone_number, avatar_url, user_type')
+        .eq('id', userId)
+        .single();
+      if (error) throw error;
+      return data;
+    }
+    ```
+
+#### 1.3.2. Mise à Jour du Profil Utilisateur
+  - **Description** : Permet à l'utilisateur de modifier ses informations de profil (nom, email, numéro de téléphone) et de mettre à jour son avatar.
+  - **Méthode** : Requête UPDATE sur la table `profiles` pour les champs modifiables, filtrée par l'`id` de l'utilisateur. Pour l'avatar, il s'agit d'un processus en deux étapes : téléversement de l'image vers Supabase Storage, puis mise à jour de l'`avatar_url` dans la table `profiles` avec le chemin du fichier stocké.
+  - **Exemple de Pseudocode (Backend Function)** :
+    ```javascript
+    // Exemple conceptuel de fonction Edge/Serverless
+    async function updateProfile(userId, updates, avatarFile = null) {
+      let newAvatarUrl = updates.avatar_url;
+
+      if (avatarFile) {
+        // 1. Téléverser l'image vers Supabase Storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('avatars') // Assurez-vous que ce bucket existe
+          .upload(`public/${userId}/${Date.now()}.png`, avatarFile, { // Utilisez un format de fichier approprié
+            cacheControl: '3600',
+            upsert: false,
+          });
+        
+        if (uploadError) throw uploadError;
+        newAvatarUrl = uploadData.path; // Chemin de l'image dans le storage
+      }
+
+      // 2. Mettre à jour les données du profil dans la base de données
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({ ...updates, avatar_url: newAvatarUrl })
+        .eq('id', userId);
+      
+      if (error) throw error;
+      return data;
+    }
+    ```
+
+#### 1.3.3. Gestion de l'Avatar (Supabase Storage)
+  - **But** : Stocker et récupérer les images d'avatar des utilisateurs de manière sécurisée et efficace.
+  - **Détails** :
+    - **Bucket** : Un bucket de stockage dédié (`avatars`) devrait être créé dans Supabase Storage.
+    - **Politiques de sécurité (Row Level Security)** : Des politiques doivent être définies pour permettre aux utilisateurs d'écrire et de lire leurs propres avatars, et potentiellement aux autres utilisateurs de lire les avatars publics.
+    - **URL Publique** : Une fois téléversé, l'image est accessible via une URL publique fournie par Supabase Storage, qui sera stockée dans le champ `avatar_url` de la table `profiles`.
+
+---
+
+## 2. Gestion des Courses et de la Localisation
+
+### 2.1. `rides`
+- **But** : Table centrale pour chaque course, de la demande à la finalisation.
+- **Colonnes** :
+  - `id` (UUID, Primary Key, DEFAULT `gen_random_uuid()`)
+  - `client_id` (UUID, NOT NULL, REFERENCES `profiles(id)`)
+  - `driver_id` (UUID, nullable, REFERENCES `drivers(id)`)
+  - `payment_method_id` (UUID, nullable, REFERENCES `payment_methods(id)`)
+  - `ride_option_id` (TEXT, NOT NULL, REFERENCES `ride_options_catalog(id)`)
+  - `pickup_address` (TEXT, NOT NULL)
+  - `pickup_location_lat` (DECIMAL(10,8), NOT NULL)
+  - `pickup_location_lng` (DECIMAL(11,8), NOT NULL)
+  - `destination_address` (TEXT, NOT NULL)
+  - `destination_lat` (DECIMAL(10,8), NOT NULL)
+  - `destination_lng` (DECIMAL(11,8), NOT NULL)
+  - `price` (DECIMAL(10,2), NOT NULL)
+  - `final_price` (DECIMAL(10,2), nullable)
+  - `status` (TEXT, NOT NULL, CHECK (status IN ('pending', 'accepted', 'in_progress', 'completed', 'cancelled')), DEFAULT 'pending')
+  - `category` (TEXT, NOT NULL, CHECK (category IN ('standard', 'luxe')))
+  - `luxe_preferences` (JSONB, nullable)
+  - `requested_at` (TIMESTAMPTZ, NOT NULL, DEFAULT `now()`)
+  - `started_at` (TIMESTAMPTZ, nullable)
+  - `completed_at` (TIMESTAMPTZ, nullable)
+  - `estimated_arrival_time` (TIMESTAMPTZ, nullable)
+  - `duration_actual` (INTEGER, nullable)
+  - `distance_actual` (DECIMAL(10,2), nullable)
+  - `cancellation_reason` (TEXT, nullable)
+  - `created_at` (TIMESTAMPTZ, NOT NULL, DEFAULT `now()`)
+  - `updated_at` (TIMESTAMPTZ, NOT NULL, DEFAULT `now()`)
+- **Relations :**
+  - **N:1** avec `profiles` (via `client_id`)
+  - **N:1** avec `drivers` (via `driver_id`)
+  - **N:1** avec `payment_methods` (via `payment_method_id`)
+  - **N:1** avec `ride_options_catalog` (via `ride_option_id`)
+  - **1:N** avec `stops` (via `ride_id`)
+  - **1:1** avec `payments` (via `ride_id`)
+  - **1:N** avec `messages` (via `ride_id`)
+  - **1:1** avec `ratings` (via `ride_id`)
+  - **1:N** avec `support_tickets` (via `ride_id`)
+- **Indexes :** `(client_id)`, `(driver_id)`, `(status)`, `(requested_at)`
+
+### 2.2. `stops`
+- **But** : Gérer les arrêts intermédiaires pour une course.
+- **Colonnes** :
+  - `id` (UUID, Primary Key, DEFAULT `gen_random_uuid()`)
+  - `ride_id` (UUID, NOT NULL, REFERENCES `rides(id)` ON DELETE CASCADE)
+  - `stop_order` (INTEGER, NOT NULL, CHECK (stop_order >= 1))
+  - `address` (TEXT, NOT NULL)
+  - `latitude` (DECIMAL(10,8), NOT NULL)
+  - `longitude` (DECIMAL(11,8), NOT NULL)
+  - `created_at` (TIMESTAMPTZ, NOT NULL, DEFAULT `now()`)
+- **Relations :**
+  - **N:1** avec `rides` (via `ride_id`)
+- **Indexes :** `(ride_id, stop_order)`
+
+### 2.3. `driver_locations`
+- **But** : Stocker les positions en temps réel des chauffeurs pour le suivi et l'analyse. Table à haute fréquence d'écriture.
+- **Colonnes** :
+  - `id` (BIGSERIAL, Primary Key)
+  - `driver_id` (UUID, NOT NULL, REFERENCES `drivers(id)` ON DELETE CASCADE)
+  - `latitude` (DECIMAL(10,8), NOT NULL)
+  - `longitude` (DECIMAL(11,8), NOT NULL)
+  - `heading` (DECIMAL(5,2), nullable)
+  - `speed` (DECIMAL(5,2), nullable)
+  - `created_at` (TIMESTAMPTZ, NOT NULL, DEFAULT `now()`)
+- **Relations :**
+  - **N:1** avec `drivers` (via `driver_id`)
+- **Indexes :** `(driver_id)`, `(created_at DESC)`
+
+---
+
+## 3. Gestion des Paiements et des Notes
+
+### 3.1. `payment_methods`
+- **But** : Stocker les méthodes de paiement configurées par un utilisateur.
+- **Colonnes** :
+  - `id` (UUID, Primary Key, DEFAULT `gen_random_uuid()`)
+  - `user_id` (UUID, NOT NULL, REFERENCES `profiles(id)` ON DELETE CASCADE)
+  - `method_type` (TEXT, NOT NULL, CHECK (method_type IN ('airtel_money', 'orange_money', 'mpesa', 'credit_card', 'cash')))
+  - `display_name` (TEXT, NOT NULL)
+  - `is_default` (BOOLEAN, NOT NULL, DEFAULT `false`)
+  - `is_verified` (BOOLEAN, NOT NULL, DEFAULT `false`)
+  - `token` (TEXT, nullable)
+  - `last_four_digits` (TEXT, nullable)
+  - `card_brand` (TEXT, nullable)
+  - `card_expiry_date` (TEXT, nullable)
+  - `phone_number_masked` (TEXT, nullable)
+  - `created_at` (TIMESTAMPTZ, NOT NULL, DEFAULT `now()`)
+  - `updated_at` (TIMESTAMPTZ, NOT NULL, DEFAULT `now()`)
+- **Relations :**
+  - **N:1** avec `profiles` (via `user_id`)
+  - **1:N** avec `rides` (via `payment_method_id`)
+  - **1:N** avec `drivers` (via `id` comme `preferred_payout_method_id`)
+- **Indexes :** `(user_id, method_type)`
+
+### 3.2. `payments`
+- **But** : Enregistrer chaque transaction de paiement.
+- **Colonnes** :
+  - `id` (UUID, Primary Key, DEFAULT `gen_random_uuid()`)
+  - `ride_id` (UUID, NOT NULL, UNIQUE, REFERENCES `rides(id)` ON DELETE CASCADE)
+  - `amount` (DECIMAL(10,2), NOT NULL)
+  - `status` (TEXT, NOT NULL, CHECK (status IN ('pending', 'completed', 'failed', 'refunded')), DEFAULT 'pending')
+  - `transaction_id` (TEXT, UNIQUE, nullable)
+  - `airtel_reference` (TEXT, nullable) -- Ajouté pour la référence spécifique Airtel Money
+  - `created_at` (TIMESTAMPTZ, NOT NULL, DEFAULT `now()`)
+  - `updated_at` (TIMESTAMPTZ, NOT NULL, DEFAULT `now()`)
+- **Relations :**
+  - **1:1** avec `rides` (via `ride_id`)
+- **Indexes :** `(ride_id)`, `(status)`
+
+### 3.3. `ratings`
+- **But** : Stocker les notes et pourboires laissés par les clients.
+- **Colonnes** :
+  - `id` (UUID, Primary Key, DEFAULT `gen_random_uuid()`)
+  - `ride_id` (UUID, NOT NULL, UNIQUE, REFERENCES `rides(id)` ON DELETE CASCADE)
+  - `rater_id` (UUID, NOT NULL, REFERENCES `profiles(id)` ON DELETE CASCADE)
+  - `rated_driver_id` (UUID, NOT NULL, REFERENCES `drivers(id)` ON DELETE CASCADE)
+  - `rating_value` (INTEGER, NOT NULL, CHECK (rating_value >= 1 AND rating_value <= 5))
+  - `tip_amount` (DECIMAL(10,2), NOT NULL, DEFAULT `0.00`)
+  - `comment` (TEXT, nullable)
+  - `created_at` (TIMESTAMPTZ, NOT NULL, DEFAULT `now()`)
+- **Relations :**
+  - **1:1** avec `rides` (via `ride_id`)
+  - **N:1** avec `profiles` (via `rater_id`)
+  - **N:1** avec `drivers` (via `rated_driver_id`)
+- **Indexes :** `(ride_id)`, `(rated_driver_id)`, `(rating_value)`
+
+---
+
+## 4. Communication et Support
+
+### 4.1. `messages`
+- **But** : Stocker l'historique des conversations de chat entre utilisateurs et chauffeurs.
+- **Colonnes** :
+  - `id` (UUID, Primary Key, DEFAULT `gen_random_uuid()`)
+  - `ride_id` (UUID, nullable, REFERENCES `rides(id)` ON DELETE SET NULL)
+  - `sender_id` (UUID, NOT NULL, REFERENCES `profiles(id)`)
+  - `receiver_id` (UUID, NOT NULL, REFERENCES `profiles(id)`)
+  - `text` (TEXT, NOT NULL)
+  - `message_type` (TEXT, NOT NULL, CHECK (message_type IN ('user', 'driver', 'system')), DEFAULT 'user') -- Ajouté pour préciser le type de message
+  - `created_at` (TIMESTAMPTZ, NOT NULL, DEFAULT `now()`)
+  - `read_at` (TIMESTAMPTZ, nullable)
+- **Relations :**
+  - **N:1** avec `rides` (via `ride_id`)
+  - **N:1** avec `profiles` (via `sender_id`)
+  - **N:1** avec `profiles` (via `receiver_id`)
+- **Indexes :** `(ride_id)`, `(sender_id, created_at)`
+
+### 4.2. `support_tickets`
+- **But** : Gérer les demandes de support des utilisateurs.
+- **Colonnes** :
+  - `id` (UUID, Primary Key, DEFAULT `gen_random_uuid()`)
+  - `user_id` (UUID, NOT NULL, REFERENCES `profiles(id)`)
+  - `ride_id` (UUID, nullable, REFERENCES `rides(id)` ON DELETE SET NULL)
+  - `subject` (TEXT, NOT NULL)
+  - `message` (TEXT, NOT NULL)
+  - `status` (TEXT, NOT NULL, CHECK (status IN ('open', 'in_progress', 'closed', 'resolved')), DEFAULT 'open')
+  - `priority` (TEXT, NOT NULL, CHECK (priority IN ('low', 'medium', 'high', 'urgent')), DEFAULT 'medium')
+  - `assigned_to` (UUID, nullable, REFERENCES `profiles(id)`)
+  - `created_at` (TIMESTAMPTZ, NOT NULL, DEFAULT `now()`)
+  - `updated_at` (TIMESTAMPTZ, NOT NULL, DEFAULT `now()`)
+  - `closed_at` (TIMESTAMPTZ, nullable)
+- **Relations :**
+  - **N:1** avec `profiles` (via `user_id`)
+  - **N:1** avec `rides` (via `ride_id`)
+  - **N:1** avec `profiles` (via `assigned_to`)
+  - **1:N** avec `support_messages` (via `id`)
+- **Indexes :** `(user_id)`, `(status)`, `(priority)`
+
+### 4.3. `support_messages`
+- **But** : Stocker les messages échangés au sein d'un ticket de support (par l'utilisateur et par les agents).
+- **Colonnes** :
+  - `id` (UUID, Primary Key, DEFAULT `gen_random_uuid()`)
+  - `ticket_id` (UUID, NOT NULL, REFERENCES `support_tickets(id)` ON DELETE CASCADE)
+  - `sender_id` (UUID, NOT NULL, REFERENCES `profiles(id)`)
+  - `message_text` (TEXT, NOT NULL)
+  - `created_at` (TIMESTAMPTZ, NOT NULL, DEFAULT `now()`)
+- **Relations :**
+  - **N:1** avec `support_tickets` (via `ticket_id`)
+  - **N:1** avec `profiles` (via `sender_id`)
+- **Indexes :** `(ticket_id, created_at)`
+
+---
+
+## 5. Configuration et Personnalisation
+
+### 5.1. `user_addresses`
+- **But** : Stocker les adresses favorites ou fréquemment utilisées par chaque utilisateur (ex: "Domicile", "Travail", adresses récentes).
+- **Colonnes** :
+  - `id` (UUID, Primary Key, DEFAULT `gen_random_uuid()`)
+  - `user_id` (UUID, NOT NULL, REFERENCES `profiles(id)` ON DELETE CASCADE)
+  - `label` (TEXT, nullable)
+  - `full_address` (TEXT, NOT NULL)
+  - `latitude` (DECIMAL(10,8), NOT NULL)
+  - `longitude` (DECIMAL(11,8), NOT NULL)
+  - `is_favorite` (BOOLEAN, NOT NULL, DEFAULT `false`)
+  - `last_used_at` (TIMESTAMPTZ, nullable)
+  - `created_at` (TIMESTAMPTZ, NOT NULL, DEFAULT `now()`)
+  - `updated_at` (TIMESTAMPTZ, NOT NULL, DEFAULT `now()`)
+- **Relations :**
+  - **N:1** avec `profiles` (via `user_id`)
+- **Indexes :** `(user_id, is_favorite)`, `(user_id, last_used_at DESC)`
+
+### 5.2. `ride_options_catalog`
+- **But** : Catalogue des types de courses configurables depuis le backend (Standard, Luxe, Jet, Spacieux, etc.).
+- **Colonnes** :
+  - `id` (TEXT, Primary Key)
+  - `name` (TEXT, NOT NULL)
+  - `description` (TEXT, nullable)
+  - `base_price_per_km` (DECIMAL(10,2), NOT NULL)
+  - `base_price_per_minute` (DECIMAL(10,2), NOT NULL)
+  - `min_price` (DECIMAL(10,2), NOT NULL)
+  - `estimated_pickup_time_minutes` (INTEGER, nullable)
+  - `icon_name` (TEXT, nullable)
+  - `car_image_asset` (TEXT, nullable)
+  - `category` (TEXT, NOT NULL, CHECK (category IN ('standard', 'luxe')))
+  - `max_passengers` (INTEGER, nullable)
+  - `is_active` (BOOLEAN, NOT NULL, DEFAULT `true`)
+  - `display_order` (INTEGER, nullable)
+  - `created_at` (TIMESTAMPTZ, NOT NULL, DEFAULT `now()`)
+  - `updated_at` (TIMESTAMPTZ, NOT NULL, DEFAULT `now()`)
+- **Relations :**
+  - **1:N** avec `rides` (via `id` comme `ride_option_id`)
+- **Indexes :** `(category, display_order)`
+
+### 5.3. `popular_places`
+- **But** : Stocker des lieux populaires ou suggérés par l'administration, pour faciliter la recherche rapide.
+- **Colonnes** :
+  - `id` (UUID, Primary Key, DEFAULT `gen_random_uuid()`)
+  - `name` (TEXT, NOT NULL)
+  - `address` (TEXT, NOT NULL)
+  - `latitude` (DECIMAL(10,8), NOT NULL)
+  - `longitude` (DECIMAL(11,8), NOT NULL)
+  - `category` (TEXT, nullable, ex: 'shopping', 'business', 'restaurant')
+  - `display_order` (INTEGER, nullable)
+  - `created_at` (TIMESTAMPTZ, NOT NULL, DEFAULT `now()`)
+  - `updated_at` (TIMESTAMPTZ, NOT NULL, DEFAULT `now()`)
+- **Indexes :** `(category, display_order)`
+
+### 5.4. `faq_articles`
+- **But** : Base de connaissances pour la section d'aide.
+- **Colonnes** :
+  - `id` (UUID, Primary Key, DEFAULT `gen_random_uuid()`)
+  - `title` (TEXT, NOT NULL)
+  - `content` (TEXT, NOT NULL)
+  - `category` (TEXT, NOT NULL)
+  - `display_order` (INTEGER, nullable)
+  - `created_at` (TIMESTAMPTZ, NOT NULL, DEFAULT `now()`)
+  - `updated_at` (TIMESTAMPTZ, NOT NULL, DEFAULT `now()`)
+- **Indexes :** `(category, display_order)`
