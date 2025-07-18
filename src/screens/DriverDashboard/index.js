@@ -38,6 +38,8 @@ const { width, height } = Dimensions.get('window');
 // La déclaration de mapStyle est maintenant supprimée car elle est importée de constants.js
 
 export default function DriverDashboardScreen({ navigation }) {
+  console.log('🚗 DriverDashboard: Initialisation du composant');
+  
   // États principaux
   const [driverStatus, setDriverStatus] = useState('offline'); // 'offline', 'online', 'request', 'toPickup', 'inTrip'
   const [userLocation, setUserLocation] = useState(null);
@@ -47,6 +49,8 @@ export default function DriverDashboardScreen({ navigation }) {
     latitudeDelta: 0.09,
     longitudeDelta: 0.04,
   });
+  
+  console.log('🚗 DriverDashboard: États initialisés');
   
   // Données professionnelles
   const [activeRequests, setActiveRequests] = useState(8); // Nombre de requêtes actives
@@ -197,57 +201,79 @@ export default function DriverDashboardScreen({ navigation }) {
   const containerBounceY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    requestLocationPermission();
-    startAnimations();
-    // Animation continue de la flèche
-    Animated.loop(
-      Animated.sequence([
-        Animated.parallel([
-          Animated.timing(arrowTranslateY, {
-            toValue: -10,
-            duration: 1200,
-            useNativeDriver: true,
-          }),
-          Animated.timing(arrowOpacity, {
-            toValue: 0.4,
-            duration: 1200,
-            useNativeDriver: true,
-          }),
-        ]),
-        Animated.parallel([
-          Animated.timing(arrowTranslateY, {
-            toValue: 0,
-            duration: 1200,
-            useNativeDriver: true,
-          }),
-          Animated.timing(arrowOpacity, {
-            toValue: 1,
-            duration: 1200,
-            useNativeDriver: true,
-          }),
-        ]),
-      ])
-    ).start();
+    console.log('🚗 DriverDashboard: useEffect démarré');
+    try {
+      requestLocationPermission();
+      startAnimations();
+      console.log('🚗 DriverDashboard: Animations démarrées');
+      // Animation continue de la flèche
+      Animated.loop(
+        Animated.sequence([
+          Animated.parallel([
+            Animated.timing(arrowTranslateY, {
+              toValue: -10,
+              duration: 1200,
+              useNativeDriver: true,
+            }),
+            Animated.timing(arrowOpacity, {
+              toValue: 0.4,
+              duration: 1200,
+              useNativeDriver: true,
+            }),
+          ]),
+          Animated.parallel([
+            Animated.timing(arrowTranslateY, {
+              toValue: 0,
+              duration: 1200,
+              useNativeDriver: true,
+            }),
+            Animated.timing(arrowOpacity, {
+              toValue: 1,
+              duration: 1200,
+              useNativeDriver: true,
+            }),
+          ]),
+        ])
+      ).start();
+      console.log('🚗 DriverDashboard: useEffect terminé avec succès');
+    } catch (error) {
+      console.log('❌ DriverDashboard: Erreur dans useEffect:', error);
+    }
   }, []);
 
   const requestLocationPermission = async () => {
-    let { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert(
-        'Permission de localisation refusée',
-        'Veuillez activer les services de localisation pour utiliser cette application.'
-      );
-      return;
-    }
+    try {
+      console.log('🚗 DriverDashboard: Demande de permission de localisation...');
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        console.log('❌ DriverDashboard: Permission de localisation refusée');
+        Alert.alert(
+          'Permission de localisation refusée',
+          'Veuillez activer les services de localisation pour utiliser cette application.'
+        );
+        return;
+      }
 
-    let location = await Location.getCurrentPositionAsync({});
-    setUserLocation(location.coords);
-    setRegion({
-      latitude: location.coords.latitude,
-      longitude: location.coords.longitude,
-      latitudeDelta: 0.0922,
-      longitudeDelta: 0.0421,
-    });
+      console.log('✅ DriverDashboard: Permission accordée, récupération de la position...');
+      let location = await Location.getCurrentPositionAsync({});
+      console.log('✅ DriverDashboard: Position récupérée:', location.coords);
+      setUserLocation(location.coords);
+      setRegion({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        latitudeDelta: 0.0922,
+        longitudeDelta: 0.0421,
+      });
+    } catch (error) {
+      console.log('❌ DriverDashboard: Erreur lors de la demande de localisation:', error);
+      // Utiliser une position par défaut en cas d'erreur
+      setRegion({
+        latitude: -4.4419,
+        longitude: 15.2663,
+        latitudeDelta: 0.09,
+        longitudeDelta: 0.04,
+      });
+    }
   };
 
   const startAnimations = () => {
@@ -884,4 +910,4 @@ export default function DriverDashboardScreen({ navigation }) {
       />
     </View>
   );
-} 
+}

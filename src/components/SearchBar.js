@@ -122,16 +122,16 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.background.tertiary,
+    backgroundColor: colors.background.primary,
     borderRadius: borderRadius.base,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.base,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   focusedContainer: {
-    borderColor: colors.brand.primary,
-    backgroundColor: colors.background.secondary,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
   searchIcon: {
     marginRight: spacing.sm,
@@ -139,18 +139,21 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     color: colors.text.primary,
-    fontSize: typography.size.lg,
-    fontWeight: typography.weight.normal,
-    padding: 0, // Remove default padding
+    fontSize: typography.size.body,
+    fontWeight: typography.weight.medium,
+    letterSpacing: 0.5,
+    padding: 0,
   },
   clearButton: {
     marginLeft: spacing.sm,
     padding: spacing.xs,
   },
   filterButton: {
-    backgroundColor: colors.background.tertiary,
+    backgroundColor: colors.background.primary,
     borderRadius: borderRadius.base,
-    padding: spacing.base,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     minWidth: 48,
@@ -158,4 +161,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SearchBar; 
+export default SearchBar;

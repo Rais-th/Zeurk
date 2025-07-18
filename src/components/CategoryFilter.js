@@ -76,10 +76,14 @@ CategoryFilter.displayName = 'CategoryFilter';
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: spacing.sm,
+    backgroundColor: colors.background.primary,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.ui.border,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
   },
   listContainer: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: 0,
   },
   separator: {
     width: spacing.sm,
@@ -102,7 +106,8 @@ const styles = StyleSheet.create({
   chipText: {
     color: colors.text.secondary,
     fontSize: typography.size.sm,
-    fontWeight: typography.weight.medium,
+    fontWeight: typography.weight.semibold,
+    letterSpacing: 0.3,
   },
   selectedChipText: {
     color: colors.text.primary,
@@ -110,4 +115,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CategoryFilter; 
+export default CategoryFilter;

@@ -5,6 +5,7 @@ import { styles } from '../styles';
 import * as Haptics from 'expo-haptics';
 import { driverTokenService } from '../../../services/driverTokenService';
 import { notificationService } from '../../../services/notificationService';
+import { useAuth } from '../../../contexts/AuthContext';
 
 const SettingsPanel = ({
   isOnlineEnabled,
@@ -15,6 +16,7 @@ const SettingsPanel = ({
   navigation,
   onOpenProfile,
 }) => {
+  const { signOut } = useAuth();
   const [smsNotificationsEnabled, setSmsNotificationsEnabled] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -86,6 +88,33 @@ const SettingsPanel = ({
       passengerName: 'Client Test',
       passengerPhone: '+243123456789'
     });
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Déconnexion',
+      'Êtes-vous sûr de vouloir vous déconnecter ?',
+      [
+        {
+          text: 'Annuler',
+          style: 'cancel',
+        },
+        {
+          text: 'Déconnexion',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              await signOut();
+              navigation.navigate('Home');
+            } catch (error) {
+              console.error('Error during logout:', error);
+              Alert.alert('Erreur', 'Une erreur est survenue lors de la déconnexion.');
+            }
+          },
+        },
+      ]
+    );
   };
   return (
     <ScrollView 
@@ -203,6 +232,18 @@ const SettingsPanel = ({
           <Ionicons name="person" size={22} color="#FF2D55" />
         </View>
         <Text style={styles.settingText}>Profil</Text>
+        <Ionicons name="chevron-forward" size={20} color="#8E8E93" style={styles.settingArrow} />
+      </TouchableOpacity>
+      
+      <TouchableOpacity 
+        style={styles.settingItem} 
+        activeOpacity={0.7}
+        onPress={handleLogout}
+      >
+        <View style={styles.settingIconContainer}>
+          <MaterialIcons name="logout" size={22} color="#FF3B30" />
+        </View>
+        <Text style={[styles.settingText, { color: '#FF3B30' }]}>Déconnexion</Text>
         <Ionicons name="chevron-forward" size={20} color="#8E8E93" style={styles.settingArrow} />
       </TouchableOpacity>
     </ScrollView>

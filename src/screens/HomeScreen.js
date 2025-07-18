@@ -6,6 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import * as Location from 'expo-location';
 import * as Haptics from 'expo-haptics';
+import { useAuth } from '../contexts/AuthContext';
 
 const mapStyle = [
   {
@@ -130,6 +131,7 @@ const mapStyle = [
 ];
 
 export default function HomeScreen({ navigation }) {
+  const { user } = useAuth();
   const [userLocation, setUserLocation] = useState(null);
   const [userCity, setUserCity] = useState('...');
   const [userName, setUserName] = useState('Rais');
@@ -139,6 +141,31 @@ export default function HomeScreen({ navigation }) {
     latitudeDelta: 0.09,
     longitudeDelta: 0.04,
   });
+
+  const handleDrivePress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
+    // Check if user is authenticated before accessing driver dashboard
+    if (user) {
+      navigation.navigate('DriverDashboard');
+    } else {
+      // Show authentication screen for driver access
+      Alert.alert(
+        'Authentification requise',
+        'Vous devez vous connecter pour accéder au tableau de bord conducteur.',
+        [
+          {
+            text: 'Annuler',
+            style: 'cancel'
+          },
+          {
+            text: 'Se connecter',
+            onPress: () => navigation.navigate('Auth')
+          }
+        ]
+      );
+    }
+  };
 
   useEffect(() => {
     getCurrentLocation();
@@ -299,7 +326,7 @@ export default function HomeScreen({ navigation }) {
           
           <TouchableOpacity 
             style={styles.rideType}
-            onPress={() => navigation.navigate('DriverDashboard')}
+            onPress={handleDrivePress}
           >
             <Ionicons name="speedometer" size={20} color="rgba(255, 255, 255, 0.7)" />
             <Text style={[styles.rideTypeText, { color: 'rgba(255, 255, 255, 0.7)' }]}>Drive</Text>

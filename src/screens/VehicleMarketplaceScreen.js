@@ -22,7 +22,7 @@ import {
 } from '../config/vehicleMarketplace';
 
 // Custom hooks
-import { useVehicleFilters } from '../hooks/useVehicleFilters';
+import { useVehicleFilters } from '../hooks/usevehiclefilters';
 import { useFavorites } from '../hooks/useFavorites';
 import { useVehiclesContext } from '../context/VehiclesContext';
 
@@ -32,7 +32,7 @@ import CategoryFilter from '../components/CategoryFilter';
 import SearchBar from '../components/SearchBar';
 
 // Header Component
-const MarketplaceHeader = React.memo(({ navigation, onSellPress }) => (
+const MarketplaceHeader = React.memo(({ navigation }) => (
   <View style={styles.header}>
     <TouchableOpacity
       style={styles.headerButton}
@@ -43,16 +43,9 @@ const MarketplaceHeader = React.memo(({ navigation, onSellPress }) => (
       <Ionicons name="chevron-back" size={24} color={colors.text.primary} />
     </TouchableOpacity>
     
-    <Text style={styles.headerTitle}>Marketplace Auto</Text>
+    <Text style={styles.headerTitle}>Marketplace</Text>
     
-    <TouchableOpacity
-      style={styles.sellButton}
-      onPress={onSellPress}
-      accessibilityRole="button"
-      accessibilityLabel="Vendre un véhicule"
-    >
-      <Ionicons name="add" size={24} color={colors.text.primary} />
-    </TouchableOpacity>
+    <View style={styles.headerButton} />
   </View>
 ));
 
@@ -238,10 +231,6 @@ export default function VehicleMarketplaceScreen({ navigation }) {
     navigation.navigate('VehicleDetails', { vehicle });
   }, [navigation]);
 
-  const handleSellPress = useCallback(() => {
-    navigation.navigate('CreateVehicleListing');
-  }, [navigation]);
-
   const openFilters = useCallback(() => {
     setShowFilters(true);
   }, []);
@@ -277,7 +266,6 @@ export default function VehicleMarketplaceScreen({ navigation }) {
       <View style={styles.headerContainer}>
         <MarketplaceHeader 
           navigation={navigation} 
-          onSellPress={handleSellPress} 
         />
         
         <SearchBar
@@ -353,8 +341,8 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
     paddingTop: Platform.OS === 'ios' ? 50 : 20,
     paddingBottom: spacing.md,
@@ -371,13 +359,7 @@ const styles = StyleSheet.create({
     fontSize: typography.size.xxl,
     fontWeight: typography.weight.bold,
     color: colors.text.primary,
-  },
-  sellButton: {
-    padding: spacing.sm,
-    minWidth: 40,
-    minHeight: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    marginLeft: 0,
   },
   resultsHeader: {
     flexDirection: 'row',
@@ -556,4 +538,4 @@ const styles = StyleSheet.create({
     fontSize: typography.size.lg,
     fontWeight: typography.weight.semibold,
   },
-}); 
+});

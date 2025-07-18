@@ -4,6 +4,7 @@ import { FontAwesome5, Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { useNetworkStatus } from '../utils/networkManager';
+import { useAuth } from '../contexts/AuthContext';
 
 const ProfileScreen = ({ navigation }) => {
   // Use offline-capable user profile hook
@@ -15,14 +16,45 @@ const ProfileScreen = ({ navigation }) => {
     updatePreferences 
   } = useUserProfile();
   const { isConnected } = useNetworkStatus();
+  const { signOut, user } = useAuth();
 
   const handleLogout = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    Alert.alert('Déconnexion', 'Vous avez été déconnecté.');
-    navigation.replace('Home');
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      
+      Alert.alert(
+        'Déconnexion',
+        'Êtes-vous sûr de vouloir vous déconnecter ?',
+        [
+          {
+            text: 'Annuler',
+            style: 'cancel',
+          },
+          {
+            text: 'Déconnexion',
+            style: 'destructive',
+            onPress: async () => {
+              const { error } = await signOut();
+              if (error) {
+                Alert.alert('Erreur', 'Impossible de se déconnecter. Veuillez réessayer.');
+              }
+              // Navigation will be handled automatically by AuthContext state change
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      Alert.alert('Erreur', 'Une erreur est survenue lors de la déconnexion.');
+    }
   };
 
-  const menuItems = [
+  const handleLogin = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    navigation.navigate('Auth');
+  };
+
+  // Different menu items based on authentication status
+  const authenticatedMenuItems = [
     { id: '1', title: 'Modifier le profil', icon: 'person-outline', screen: 'EditProfile' },
     { id: '2', title: 'Historique des courses', icon: 'time-outline', screen: 'RideHistory' },
     { id: '3', title: 'Préférences', icon: 'settings-outline', screen: 'Preferences' },
@@ -37,6 +69,13 @@ const ProfileScreen = ({ navigation }) => {
     { id: '5', title: 'Support & Assistance', icon: 'help-circle-outline', screen: 'SupportAndAssistanceScreen' },
     { id: '6', title: 'Proposer une nouvelle fonctionnalité', icon: 'bulb-outline', screen: 'SuggestFeatureScreen' },
   ];
+
+  const guestMenuItems = [
+    { id: '5', title: 'Support & Assistance', icon: 'help-circle-outline', screen: 'SupportAndAssistanceScreen' },
+    { id: '6', title: 'Proposer une nouvelle fonctionnalité', icon: 'bulb-outline', screen: 'SuggestFeatureScreen' },
+  ];
+
+  const menuItems = user ? authenticatedMenuItems : guestMenuItems;
 
   const renderSettingItem = ({ item }) => (
     <TouchableOpacity
@@ -78,12 +117,12 @@ const ProfileScreen = ({ navigation }) => {
           </View>
         )}
         
-        {loading ? (
+        {loading && user ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#fff" />
             <Text style={styles.loadingText}>Chargement du profil...</Text>
           </View>
-        ) : (
+        ) : user ? (
           <>
             {profile?.avatar_url ? (
               <Image source={{ uri: profile.avatar_url }} style={styles.profileImage} />
@@ -99,6 +138,14 @@ const ProfileScreen = ({ navigation }) => {
               <Text style={styles.email}>{profile.email}</Text>
             )}
           </>
+        ) : (
+          <>
+            <View style={styles.profileImagePlaceholder}>
+              <Ionicons name="person-circle-outline" size={80} color="#ccc" />
+            </View>
+            <Text style={styles.fullName}>Invité</Text>
+            <Text style={styles.email}>Connectez-vous pour accéder à toutes les fonctionnalités</Text>
+          </>
         )}
       </View>
 
@@ -110,10 +157,16 @@ const ProfileScreen = ({ navigation }) => {
         contentContainerStyle={styles.settingsList}
       />
 
-      {/* Bouton de déconnexion */}
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Text style={styles.logoutButtonText}>Déconnexion</Text>
-      </TouchableOpacity>
+      {/* Bouton de déconnexion ou connexion */}
+      {user ? (
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Text style={styles.logoutButtonText}>Déconnexion</Text>
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+          <Text style={styles.loginButtonText}>Se connecter</Text>
+        </TouchableOpacity>
+      )}
 
       {/* Nouveau bouton Annuler */}
       <TouchableOpacity style={styles.cancelButton} onPress={() => {
@@ -240,6 +293,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoutButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  loginButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 15,
+    marginHorizontal: 20,
+    marginTop: 20,
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+  loginButtonText: {
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '600',
