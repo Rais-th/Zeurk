@@ -270,7 +270,17 @@ export default function HomeScreen({ navigation }) {
       <View style={styles.searchContainer}>
         <TouchableOpacity 
           style={styles.searchBar}
-          onPress={() => navigation.navigate('Search')}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            
+            // Check if user is authenticated before accessing search
+            if (user) {
+              navigation.navigate('Search');
+            } else {
+              // Show authentication screen for passenger access
+              navigation.navigate('PassengerAuth');
+            }
+          }}
         >
           <Ionicons name="search" size={24} color="#000" style={{ marginRight: 15, opacity: 0.8 }}/>
           <Text style={styles.searchText}>Où allez-vous ?</Text>

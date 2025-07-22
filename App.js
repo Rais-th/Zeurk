@@ -17,6 +17,7 @@ import OfflineIndicator from './src/components/OfflineIndicator';
 import networkManager from './src/utils/networkManager';
 import { notificationService } from './src/services/notificationService';
 import AuthScreen from './src/screens/AuthScreen';
+import PassengerAuthScreen from './src/screens/PassengerAuthScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import EditProfileScreen from './src/screens/EditProfileScreen';
 import PreferencesScreen from './src/screens/PreferencesScreen';
@@ -135,8 +136,9 @@ function NavigationWrapper() {
         <Stack.Screen name="VehicleDetails" component={VehicleDetailsScreen} />
         <Stack.Screen name="CreateVehicleListing" component={CreateVehicleListingScreen} />
         <Stack.Screen name="ScheduleRide" component={ScheduleRideScreen} />
-        {/* Authentication screen for driver access */}
+        {/* Authentication screens */}
         <Stack.Screen name="Auth" component={AuthScreen} />
+        <Stack.Screen name="PassengerAuth" component={PassengerAuthScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -10,27 +10,143 @@ import {
   Platform,
   Alert,
   StatusBar,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
+import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../config/supabase';
 
 const STATUSBAR_HEIGHT = StatusBar.currentHeight || (Platform.OS === 'ios' ? 44 : 0);
 
 const EditProfileScreen = ({ navigation }) => {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [imageUploading, setImageUploading] = useState(false);
   const [initialProfile, setInitialProfile] = useState({
-    first_name: '',
-    last_name: '',
-    email: '',
-    phone_number: '',
+    full_name: '',
+    phone: '',
     avatar_url: null,
-    is_verified: false
+    emergency_contact: '',
+    date_of_birth: null
   });
   const [profile, setProfile] = useState(initialProfile);
+
+  // Charger le profil utilisateur depuis Supabase
+  useEffect(() => {
+    loadUserProfile();
+  }, [user]);
+
+  const loadUserProfile = async () => {
+    if (!user) return;
+    
+    setInitialLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('passengers')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+        console.error('Erreur lors du chargement du profil:', error);
+        Alert.alert('Erreur', 'Impossible de charger votre profil');
+        return;
+      }
+
+      if (data) {
+        const profileData = {
+          full_name: data.full_name || '',
+          phone: data.phone || '',
+          avatar_url: data.avatar_url || null,
+          emergency_contact: data.emergency_contact || '',
+          date_of_birth: data.date_of_birth || null
+        };
+        setProfile(profileData);
+        setInitialProfile(profileData);
+      } else {
+        // Créer un nouveau profil si aucun n'existe
+        const newProfile = {
+          full_name: user.user_metadata?.full_name || '',
+          phone: '',
+          avatar_url: null,
+          emergency_contact: '',
+          date_of_birth: null
+        };
+        setProfile(newProfile);
+        setInitialProfile(newProfile);
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement du profil:', error);
+      Alert.alert('Erreur', 'Impossible de charger votre profil');
+    } finally {
+      setInitialLoading(false);
+    }
+  };
 
   // Vérifier si des modifications ont été apportées
   const hasChanges = () => {
     return JSON.stringify(profile) !== JSON.stringify(initialProfile);
+  };
+
+  // Fonction pour uploader une image vers Supabase Storage
+  const uploadImage = async (imageUri) => {
+    try {
+      // Compresser l'image pour optimiser la taille
+      const manipulatedImage = await ImageManipulator.manipulateAsync(
+        imageUri,
+        [{ resize: { width: 400, height: 400 } }],
+        { 
+          compress: 0.8, 
+          format: ImageManipulator.SaveFormat.JPEG 
+        }
+      );
+
+      // Créer un nom de fichier unique avec structure de dossier
+      const fileName = `${user.id}/avatar_${Date.now()}.jpg`;
+      
+      // Convertir l'image en blob pour l'upload
+      const response = await fetch(manipulatedImage.uri);
+      const blob = await response.blob();
+
+      // Supprimer l'ancien avatar s'il existe
+      if (initialProfile.avatar_url && initialProfile.avatar_url.includes('supabase')) {
+        try {
+          const oldFileName = initialProfile.avatar_url.split('/').pop();
+          if (oldFileName) {
+            await supabase.storage
+              .from('avatars')
+              .remove([`${user.id}/${oldFileName}`]);
+          }
+        } catch (error) {
+          console.log('Impossible de supprimer l\'ancien avatar:', error);
+        }
+      }
+
+      // Upload vers Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, blob, {
+          contentType: 'image/jpeg',
+          upsert: true
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      // Obtenir l'URL publique
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Erreur lors de l\'upload de l\'image:', error);
+      throw error;
+    }
   };
 
   const pickImage = async () => {
@@ -48,22 +164,85 @@ const EditProfileScreen = ({ navigation }) => {
       quality: 1.0,
     });
 
-    if (!result.canceled) {
-      setProfile(prev => ({ ...prev, avatar_url: result.assets[0].uri }));
+    if (!result.canceled && result.assets[0]) {
+      const imageUri = result.assets[0].uri;
+      
+      // Afficher immédiatement l'image sélectionnée
+      setProfile(prev => ({ ...prev, avatar_url: imageUri }));
+      
+      // Uploader l'image en arrière-plan
+      setImageUploading(true);
+      try {
+        const uploadedUrl = await uploadImage(imageUri);
+        // Mettre à jour avec l'URL uploadée
+        setProfile(prev => ({ ...prev, avatar_url: uploadedUrl }));
+      } catch (error) {
+        // En cas d'erreur, revenir à l'image précédente
+        setProfile(prev => ({ ...prev, avatar_url: initialProfile.avatar_url }));
+        Alert.alert(
+          'Erreur d\'upload', 
+          'Impossible d\'uploader l\'image. Veuillez réessayer.',
+          [{ text: 'OK' }]
+        );
+      } finally {
+        setImageUploading(false);
+      }
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (!user) {
+      Alert.alert('Erreur', 'Utilisateur non connecté');
+      return;
+    }
+
+    setLoading(true);
     try {
-      setLoading(true);
-      // Pour l'instant, on simule juste la sauvegarde
-      setTimeout(() => {
-        Alert.alert('Succès', 'Profil mis à jour avec succès');
-        setInitialProfile(profile); // Mettre à jour le profil initial après la sauvegarde
-        navigation.goBack();
-      }, 1000);
+      // Préparer les données à sauvegarder
+      const updateData = {
+        full_name: profile.full_name,
+        phone: profile.phone,
+        avatar_url: profile.avatar_url,
+        email: user.email,
+        emergency_contact: profile.emergency_contact,
+        date_of_birth: profile.date_of_birth,
+        updated_at: new Date().toISOString()
+      };
+
+      // Vérifier si le profil existe déjà
+      const { data: existingProfile } = await supabase
+        .from('passengers')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+
+      let result;
+      if (existingProfile) {
+        // Mettre à jour le profil existant
+        result = await supabase
+          .from('passengers')
+          .update(updateData)
+          .eq('id', user.id);
+      } else {
+        // Créer un nouveau profil
+        result = await supabase
+          .from('passengers')
+          .insert([{
+            id: user.id,
+            ...updateData
+          }]);
+      }
+
+      if (result.error) {
+        throw result.error;
+      }
+
+      Alert.alert('Succès', 'Profil mis à jour avec succès');
+      setInitialProfile(profile); // Mettre à jour le profil initial après la sauvegarde
+      navigation.goBack();
     } catch (error) {
-      Alert.alert('Erreur', 'Impossible de mettre à jour votre profil');
+      console.error('Erreur lors de la sauvegarde:', error);
+      Alert.alert('Erreur', 'Impossible de mettre à jour votre profil. Veuillez réessayer.');
     } finally {
       setLoading(false);
     }
@@ -71,51 +250,54 @@ const EditProfileScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scrollView}>
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Modifier le profil</Text>
-          <View style={styles.headerRight} /> {/* Espace vide pour maintenir la symétrie */}
+      {initialLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#fff" />
+          <Text style={styles.loadingText}>Chargement du profil...</Text>
         </View>
-
-        {/* Photo de profil */}
-        <View style={styles.avatarContainer}>
-          <TouchableOpacity onPress={pickImage}>
-            {profile.avatar_url ? (
-              <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
-            ) : (
-              <View style={styles.avatarPlaceholder}>
-                <Ionicons name="person" size={40} color="#fff" />
-              </View>
-            )}
-            <View style={styles.editIconContainer}>
-              <Ionicons name="camera" size={20} color="#fff" />
+      ) : (
+        <>
+          <ScrollView style={styles.scrollView}>
+            <View style={styles.header}>
+              <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+                <Ionicons name="arrow-back" size={24} color="#fff" />
+              </TouchableOpacity>
+              <Text style={styles.headerTitle}>Modifier le profil</Text>
+              <View style={styles.headerRight} />
             </View>
-          </TouchableOpacity>
-        </View>
+
+            {/* Photo de profil */}
+            <View style={styles.avatarContainer}>
+              <TouchableOpacity onPress={pickImage} disabled={imageUploading}>
+                {profile.avatar_url ? (
+                  <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
+                ) : (
+                  <View style={styles.avatarPlaceholder}>
+                    <Ionicons name="person" size={40} color="#fff" />
+                  </View>
+                )}
+                <View style={styles.editIconContainer}>
+                  {imageUploading ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Ionicons name="camera" size={20} color="#fff" />
+                  )}
+                </View>
+              </TouchableOpacity>
+              {imageUploading && (
+                <Text style={styles.uploadingText}>Upload en cours...</Text>
+              )}
+            </View>
 
         {/* Champs de formulaire */}
         <View style={styles.form}>
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Prénom</Text>
+            <Text style={styles.label}>Nom complet</Text>
             <TextInput
               style={styles.input}
-              value={profile.first_name}
-              onChangeText={(text) => setProfile(prev => ({ ...prev, first_name: text }))}
-              placeholder="Votre prénom"
-              placeholderTextColor="#666"
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Nom</Text>
-            <TextInput
-              style={styles.input}
-              value={profile.last_name}
-              onChangeText={(text) => setProfile(prev => ({ ...prev, last_name: text }))}
-              placeholder="Votre nom"
+              value={profile.full_name}
+              onChangeText={(text) => setProfile(prev => ({ ...prev, full_name: text }))}
+              placeholder="Votre nom complet"
               placeholderTextColor="#666"
             />
           </View>
@@ -124,8 +306,8 @@ const EditProfileScreen = ({ navigation }) => {
             <Text style={styles.label}>Numéro de téléphone</Text>
             <TextInput
               style={styles.input}
-              value={profile.phone_number}
-              onChangeText={(text) => setProfile(prev => ({ ...prev, phone_number: text }))}
+              value={profile.phone}
+              onChangeText={(text) => setProfile(prev => ({ ...prev, phone: text }))}
               placeholder="Votre numéro"
               placeholderTextColor="#666"
               keyboardType="phone-pad"
@@ -135,60 +317,49 @@ const EditProfileScreen = ({ navigation }) => {
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Email</Text>
             <TextInput
-              style={styles.input}
-              value={profile.email}
-              onChangeText={(text) => setProfile(prev => ({ ...prev, email: text }))}
+              style={[styles.input, styles.disabledInput]}
+              value={user?.email || ''}
               placeholder="Votre email"
               placeholderTextColor="#666"
               keyboardType="email-address"
               autoCapitalize="none"
+              editable={false}
             />
+            <Text style={styles.helperText}>L'email ne peut pas être modifié</Text>
           </View>
 
-          {/* Vérification d'identité */}
-          <TouchableOpacity 
-            style={[
-              styles.verificationButton,
-              profile.is_verified && styles.verifiedButton
-            ]}
-          >
-            <View style={styles.verificationContent}>
-              <Ionicons 
-                name={profile.is_verified ? "shield-checkmark" : "shield-outline"} 
-                size={24} 
-                color="#fff" 
-              />
-              <View style={styles.verificationText}>
-                <Text style={styles.verificationTitle}>
-                  {profile.is_verified ? 'Identité vérifiée' : 'Vérifier mon identité'}
-                </Text>
-                <Text style={styles.verificationSubtitle}>
-                  {profile.is_verified 
-                    ? 'Votre identité a été vérifiée avec succès' 
-                    : 'Ajoutez vos documents d\'identité pour plus de sécurité'}
-                </Text>
-              </View>
-              {!profile.is_verified && (
-                <Ionicons name="chevron-forward" size={24} color="#fff" />
-              )}
-            </View>
-          </TouchableOpacity>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Contact d'urgence</Text>
+            <TextInput
+              style={styles.input}
+              value={profile.emergency_contact}
+              onChangeText={(text) => setProfile(prev => ({ ...prev, emergency_contact: text }))}
+              placeholder="Numéro d'urgence"
+              placeholderTextColor="#666"
+              keyboardType="phone-pad"
+            />
+            <Text style={styles.helperText}>Personne à contacter en cas d'urgence</Text>
+          </View>
         </View>
-      </ScrollView>
+          </ScrollView>
 
-      {/* Bouton Enregistrer en bas */}
-      {hasChanges() && (
-        <View style={styles.saveButtonContainer}>
-          <TouchableOpacity 
-            style={[styles.saveButton, loading && styles.saveButtonDisabled]} 
-            onPress={handleSave}
-            disabled={loading}
-          >
-            <Text style={styles.saveButtonText}>
-              {loading ? 'Sauvegarde...' : 'Enregistrer'}
-            </Text>
-          </TouchableOpacity>
-        </View>
+          {/* Bouton Enregistrer en bas */}
+          {hasChanges() && (
+            <View style={styles.saveButtonContainer}>
+              <TouchableOpacity 
+                style={[styles.saveButton, loading && styles.saveButtonDisabled]} 
+                onPress={handleSave}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#000" />
+                ) : (
+                  <Text style={styles.saveButtonText}>Enregistrer</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
+        </>
       )}
     </View>
   );
@@ -327,6 +498,31 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.6)',
     fontSize: 14,
     marginTop: 2,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#fff',
+    fontSize: 16,
+    marginTop: 16,
+  },
+  disabledInput: {
+    opacity: 0.6,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  helperText: {
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontSize: 12,
+    marginTop: 5,
+  },
+  uploadingText: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: 'center',
   },
 });
 
