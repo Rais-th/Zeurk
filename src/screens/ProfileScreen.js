@@ -65,7 +65,7 @@ const ProfileScreen = ({ navigation }) => {
           onPress: () => navigation.navigate('PassengerAuth'),
         },
         {
-          text: 'Compte Chauffeur',
+          text: 'Compte Conducteur',
           onPress: () => navigation.navigate('Auth'),
         },
       ]
@@ -91,7 +91,7 @@ const ProfileScreen = ({ navigation }) => {
 
   const guestMenuItems = [
     { id: '1', title: 'Créer un compte Passager', icon: 'person-add-outline', action: 'createPassengerAccount' },
-    { id: '2', title: 'Créer un compte Chauffeur', icon: 'car-outline', action: 'createDriverAccount' },
+    { id: '2', title: 'Devenir Conducteur', icon: 'car-outline', action: 'createDriverAccount' },
     { id: '5', title: 'Support & Assistance', icon: 'help-circle-outline', screen: 'SupportAndAssistanceScreen' },
     { id: '6', title: 'Proposer une nouvelle fonctionnalité', icon: 'bulb-outline', screen: 'SuggestFeatureScreen' },
   ];

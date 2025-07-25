@@ -241,7 +241,7 @@ const PreferencesScreen = ({ navigation }) => {
                 </Text>
                 {preferredClass === 'Luxe' && (
                   <Text style={styles.classCardDescription}>
-                    Véhicules haut de gamme avec chauffeurs professionnels pour une expérience luxueuse
+                    Véhicules haut de gamme avec conducteurs professionnels pour une expérience luxueuse
                   </Text>
                 )}
               </View>
@@ -598,4 +598,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default PreferencesScreen; 
+export default PreferencesScreen;

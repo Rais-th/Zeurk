@@ -400,14 +400,14 @@ export default function NavigationScreen({ route, navigation }) {
     }
   };
 
-  // Mettre à jour l'itinéraire si le chauffeur dévie
+  // Mettre à jour l'itinéraire si le conducteur dévie
   const updateRouteIfNeeded = (currentLocation) => {
     if (routeCoordinates.length === 0) return;
     
-    // Vérifier si le chauffeur est toujours sur la route
+    // Vérifier si le conducteur est toujours sur la route
     const distanceFromRoute = calculateDistanceFromRoute(currentLocation);
     
-    // Si le chauffeur dévie de plus de 50 mètres, recalculer l'itinéraire
+    // Si le conducteur dévie de plus de 50 mètres, recalculer l'itinéraire
     if (distanceFromRoute > 0.0005) { // Approximativement 50 mètres
       console.log('Recalcul de l\'itinéraire - déviation détectée');
       const newRoute = generateRoute(currentLocation, rideData.coordinates);

@@ -311,7 +311,7 @@ const LuxePreferencesModal = ({ visible, onClose, onConfirm }) => {
             </TouchableOpacity>
           </View>
           
-          <Text style={styles.modalSubtitle}>Nous informerons votre chauffeur de vos préférences.</Text>
+          <Text style={styles.modalSubtitle}>Nous informerons votre conducteur de vos préférences.</Text>
           
           <View style={styles.preferenceSection}>
             <TouchableOpacity 
@@ -367,7 +367,7 @@ const LuxePreferencesModal = ({ visible, onClose, onConfirm }) => {
             {securityGuard && (
               <View style={styles.securityNoteContainer}>
                 <Text style={styles.securityNoteText}>
-                  Le chauffeur sera informé que vous voyagez avec une sécurité personnelle et prévoira l'espace nécessaire.
+                  Le conducteur sera informé que vous voyagez avec une sécurité personnelle et prévoira l'espace nécessaire.
                 </Text>
               </View>
             )}
@@ -1296,4 +1296,4 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontStyle: 'italic',
   },
-}); 
+});

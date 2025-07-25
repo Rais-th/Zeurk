@@ -674,7 +674,7 @@ export default function FindDriverScreen({ route, navigation }) {
               })}
               <FontAwesome name="car" size={32} color={category === 'luxe' ? '#D4AF37' : '#3B82F6'} />
             </View>
-            <Text style={styles.searchingText}>Recherche d'un chauffeur...</Text>
+            <Text style={styles.searchingText}>Recherche d'un conducteur...</Text>
           </Animated.View>
 
           {/* Panneau unifié avec transitions */}
@@ -739,7 +739,7 @@ export default function FindDriverScreen({ route, navigation }) {
             }}>
               <View style={styles.waitingContainer}>
                 <Ionicons name="time-outline" size={50} color="#FFC700" />
-                <Text style={styles.waitingTitle}>Votre chauffeur vous attend</Text>
+                <Text style={styles.waitingTitle}>Votre conducteur vous attend</Text>
                 <Text style={styles.waitingSubtitle}>
                   Départ dans <Text style={{fontWeight: 'bold'}}>{formatTime(countdown)}</Text>
                 </Text>
@@ -915,7 +915,7 @@ export default function FindDriverScreen({ route, navigation }) {
             <Text style={styles.cancelModalSubtitle}>Veuillez sélectionner la raison de votre annulation.</Text>
             
             <View style={styles.cancelReasonsContainer}>
-              {['Le chauffeur met trop de temps', 'J\'ai changé d\'avis', 'Problème de prix', 'Le chauffeur a demandé d\'annuler', 'Autre'].map((reason, index) => (
+              {['Le conducteur met trop de temps', 'J\'ai changé d\'avis', 'Problème de prix', 'Le conducteur a demandé d\'annuler', 'Autre'].map((reason, index) => (
                 <TouchableOpacity key={index} style={styles.reasonButton} onPress={() => handleCancellation(reason)}>
                   <Text style={styles.reasonButtonText}>{reason}</Text>
                 </TouchableOpacity>
@@ -1448,4 +1448,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 16,
   },
-}); 
+});

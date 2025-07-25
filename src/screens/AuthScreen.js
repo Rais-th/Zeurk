@@ -96,8 +96,8 @@ const AuthScreen = ({ navigation, route }) => {
         </Text>
         <Text style={styles.subtitle}>
           {isSignUp
-            ? 'Créez votre compte chauffeur'
-            : 'Connectez-vous pour devenir chauffeur'}
+            ? 'Rejoignez notre équipe de conducteurs'
+            : 'Connectez-vous pour conduire avec nous'}
         </Text>
       </View>
 

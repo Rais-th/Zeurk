@@ -58,7 +58,7 @@ const SMSRideRequestScreen = ({ route, navigation }) => {
       
       Alert.alert(
         '❌ Course Refusée',
-        'La course a été refusée. Elle sera proposée à d\'autres chauffeurs.',
+        'La course a été refusée. Elle sera proposée à d\'autres conducteurs.',
         [
           {
             text: 'Retour',
@@ -205,7 +205,7 @@ const SMSRideRequestScreen = ({ route, navigation }) => {
           <View style={styles.statusContainer}>
             <Ionicons name="close-circle" size={48} color="#FF3B30" />
             <Text style={styles.statusText}>Course Refusée</Text>
-            <Text style={styles.statusSubtext}>Proposée à d'autres chauffeurs</Text>
+            <Text style={styles.statusSubtext}>Proposée à d'autres conducteurs</Text>
           </View>
         )}
       </ScrollView>
