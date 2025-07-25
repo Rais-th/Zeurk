@@ -42,14 +42,33 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signUpWithEmail = async (email, password, metadata = {}) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: metadata,
-      },
-    });
-    return { data, error };
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: metadata,
+        },
+      });
+      
+      if (error) {
+        console.log('❌ Supabase auth error:', error);
+        return { data, error };
+      }
+      
+      // If user was created but there's an issue with the profile creation,
+      // we still return success since the auth user was created
+      console.log('✅ User created successfully:', data.user?.id);
+      return { data, error: null };
+    } catch (err) {
+      console.log('❌ Unexpected error during signup:', err);
+      return { 
+        data: null, 
+        error: { 
+          message: `Erreur inattendue: ${err.message || 'Erreur inconnue'}` 
+        } 
+      };
+    }
   };
 
   const signOut = async () => {
