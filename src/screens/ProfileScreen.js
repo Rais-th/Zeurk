@@ -50,7 +50,26 @@ const ProfileScreen = ({ navigation }) => {
 
   const handleLogin = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    navigation.navigate('Auth');
+    
+    // Show options for passenger or driver login
+    Alert.alert(
+      'Type de compte',
+      'Quel type de compte souhaitez-vous créer ou utiliser ?',
+      [
+        {
+          text: 'Annuler',
+          style: 'cancel',
+        },
+        {
+          text: 'Compte Passager',
+          onPress: () => navigation.navigate('PassengerAuth'),
+        },
+        {
+          text: 'Compte Chauffeur',
+          onPress: () => navigation.navigate('Auth'),
+        },
+      ]
+    );
   };
 
   // Different menu items based on authentication status
@@ -71,19 +90,30 @@ const ProfileScreen = ({ navigation }) => {
   ];
 
   const guestMenuItems = [
+    { id: '1', title: 'Créer un compte Passager', icon: 'person-add-outline', action: 'createPassengerAccount' },
+    { id: '2', title: 'Créer un compte Chauffeur', icon: 'car-outline', action: 'createDriverAccount' },
     { id: '5', title: 'Support & Assistance', icon: 'help-circle-outline', screen: 'SupportAndAssistanceScreen' },
     { id: '6', title: 'Proposer une nouvelle fonctionnalité', icon: 'bulb-outline', screen: 'SuggestFeatureScreen' },
   ];
 
   const menuItems = user ? authenticatedMenuItems : guestMenuItems;
 
+  const handleMenuItemPress = (item) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
+    if (item.action === 'createPassengerAccount') {
+      navigation.navigate('PassengerAuth');
+    } else if (item.action === 'createDriverAccount') {
+      navigation.navigate('Auth');
+    } else if (item.screen) {
+      navigation.navigate(item.screen);
+    }
+  };
+
   const renderSettingItem = ({ item }) => (
     <TouchableOpacity
       style={styles.menuItemContainer}
-      onPress={() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        navigation.navigate(item.screen);
-      }}
+      onPress={() => handleMenuItemPress(item)}
     >
       <View style={styles.menuItemContent}>
         <Ionicons name={item.icon} size={24} color="#fff" />
