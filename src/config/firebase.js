@@ -50,7 +50,7 @@ export const COLLECTIONS = {
   USERS: 'users' // Collection unifiée pour tous les utilisateurs
 };
 
-import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 
 // Helper functions for user documents
@@ -160,8 +160,8 @@ export const promoteToDriver = async (userId, driverData) => {
     }, { merge: true });
 
     // Supprimer de la collection passengers (optionnel - garder pour l'historique)
-    // const passengerRef = doc(firestore, COLLECTIONS.PASSENGERS, userId);
-    // await deleteDoc(passengerRef);
+    const passengerRef = doc(firestore, COLLECTIONS.PASSENGERS, userId);
+    await deleteDoc(passengerRef);
 
     return true;
   } catch (error) {

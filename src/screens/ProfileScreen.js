@@ -6,7 +6,8 @@ import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useNetworkStatus } from '../utils/networkManager';
 import { useAuth } from '../contexts/AuthContext';
-import { createUserDocument, getUserDocument, uploadImageToStorage, deleteImageFromStorage } from '../config/firebase';
+import { createUserDocument, getUserDocument, uploadImageToStorage, deleteImageFromStorage, getUserType } from '../config/firebase';
+import { driverTokenService } from '../services/driverTokenService';
 
 const ProfileScreen = ({ navigation }) => {
   // Simplified state management - no problematic hooks
@@ -14,6 +15,9 @@ const ProfileScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [isOfflineData, setIsOfflineData] = useState(false);
+  const [userType, setUserType] = useState(null);
+  const [isRegisteredDriver, setIsRegisteredDriver] = useState(false);
+  const [profileType, setProfileType] = useState('passenger');
   
   const { isConnected } = useNetworkStatus();
   const { signOut, user } = useAuth();
@@ -22,6 +26,19 @@ const ProfileScreen = ({ navigation }) => {
   useEffect(() => {
     loadUserProfile();
   }, [user]);
+
+  // Robust profile type detection
+  const detectProfileType = async (user, userTypeFromFirestore) => {
+    let type = userTypeFromFirestore;
+    // Check driverTokenService
+    const isDriverInService = await driverTokenService.isRegisteredAsDriver(user.id);
+    // Fallback to user metadata
+    const metaType = user.user_metadata?.userType;
+    if (type === 'driver' || isDriverInService || metaType === 'driver') {
+      return 'driver';
+    }
+    return 'passenger';
+  };
 
   const loadUserProfile = async (isRefreshing = false) => {
     if (user) {
@@ -108,6 +125,12 @@ const ProfileScreen = ({ navigation }) => {
           console.log('📸 Avatar URL fallback:', fallbackProfile.avatar_url);
           setProfile(fallbackProfile);
         }
+        const type = await getUserType(user.id);
+        setUserType(type);
+        const detectedType = await detectProfileType(user, type);
+        setProfileType(detectedType);
+        const isDriverInService = await driverTokenService.isRegisteredAsDriver(user.id);
+        setIsRegisteredDriver(type === 'driver' || isDriverInService);
       } catch (error) {
         console.error('❌ Erreur lors du chargement du profil:', error);
         // Fallback to basic user data on error
@@ -143,6 +166,9 @@ const ProfileScreen = ({ navigation }) => {
         
         console.log('📸 Avatar URL error fallback:', errorProfile.avatar_url);
         setProfile(errorProfile);
+        setUserType(null);
+        setIsRegisteredDriver(false);
+        setProfileType('passenger');
       } finally {
         if (isRefreshing) {
           setRefreshing(false);
@@ -152,6 +178,9 @@ const ProfileScreen = ({ navigation }) => {
       }
     } else {
       setProfile(null);
+      setUserType(null);
+      setIsRegisteredDriver(false);
+      setProfileType('passenger');
     }
   };
 
@@ -391,6 +420,42 @@ const ProfileScreen = ({ navigation }) => {
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         {user && (
+          <View style={styles.headerProfileCenter}>
+            {/* Profile type badge */}
+            <View style={[styles.profileTypeBadge, profileType === 'driver' ? styles.driverBadge : styles.passengerBadge]}>
+              <Text style={styles.profileTypeBadgeText}>
+                Type: {profileType === 'driver' ? 'Driver' : 'Passenger'}
+              </Text>
+            </View>
+            <View style={styles.avatarContainerHeader}>
+              {profile?.avatar_url && profile.avatar_url.trim() !== '' ? (
+                <Image 
+                  source={{ 
+                    uri: profile.avatar_url,
+                    headers: {
+                      'Cache-Control': 'no-cache'
+                    }
+                  }} 
+                  style={styles.avatarHeader}
+                  onError={(error) => {
+                    setProfile(prev => ({ ...prev, avatar_url: '' }));
+                  }}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={styles.avatarPlaceholderHeader}>
+                  <Ionicons name="person" size={32} color="#fff" />
+                </View>
+              )}
+              <TouchableOpacity style={styles.editAvatarButtonHeader} onPress={handleImagePick}>
+                <Ionicons name="camera" size={16} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.profileNameHeader}>{profile?.fullName || 'Utilisateur'}</Text>
+            <Text style={styles.profileEmailHeader}>{profile?.email || ''}</Text>
+          </View>
+        )}
+        {user && (
           <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
             <Ionicons name="log-out-outline" size={24} color="#fff" />
           </TouchableOpacity>
@@ -403,38 +468,9 @@ const ProfileScreen = ({ navigation }) => {
         <View style={styles.profileSection}>
           {user ? (
             <>
+              {/* Remove avatar, name, email from here */}
               <View style={styles.profileInfo}>
-                <View style={styles.avatarContainer}>
-                  {profile?.avatar_url && profile.avatar_url.trim() !== '' ? (
-                    <Image 
-                      source={{ 
-                        uri: profile.avatar_url,
-                        headers: {
-                          'Cache-Control': 'no-cache'
-                        }
-                      }} 
-                      style={styles.avatar}
-                      onError={(error) => {
-                        console.log('❌ Erreur de chargement image:', error.nativeEvent);
-                        // Fallback to placeholder if image fails to load
-                        setProfile(prev => ({ ...prev, avatar_url: '' }));
-                      }}
-                      onLoad={() => console.log('✅ Image chargée avec succès:', profile.avatar_url)}
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <View style={styles.avatarPlaceholder}>
-                      <Ionicons name="person" size={32} color="#fff" />
-                    </View>
-                  )}
-                  <TouchableOpacity style={styles.editAvatarButton} onPress={handleImagePick}>
-                    <Ionicons name="camera" size={16} color="#fff" />
-                  </TouchableOpacity>
-                </View>
-                
                 <View style={styles.profileDetails}>
-                  <Text style={styles.profileName}>{profile?.fullName || 'Utilisateur'}</Text>
-                  <Text style={styles.profileEmail}>{profile?.email || ''}</Text>
                   <View style={styles.profileStats}>
                     <View style={styles.statItem}>
                       <Text style={styles.statNumber}>{profile?.rating || 5.0}</Text>
@@ -451,22 +487,9 @@ const ProfileScreen = ({ navigation }) => {
                       <Text style={styles.statLabel}>Membre</Text>
                     </View>
                   </View>
-                  
-                  {/* Bouton spécial pour devenir conducteur */}
-                  <TouchableOpacity 
-                    style={styles.becomeDriverButton}
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      navigation.navigate('Auth', { forceSignUp: true });
-                    }}
-                  >
-                    <Ionicons name="car-sport" size={20} color="#FF9500" />
-                    <Text style={styles.becomeDriverText}>Devenir Conducteur</Text>
-                    <Ionicons name="chevron-forward" size={16} color="#FF9500" />
-                  </TouchableOpacity>
+                  {/* Remove the 'Devenir Conducteur' button entirely */}
                 </View>
               </View>
-              
               {isOfflineData && (
                 <View style={styles.offlineIndicator}>
                   <Ionicons name="cloud-offline-outline" size={16} color="#FF9500" />
@@ -532,6 +555,60 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     padding: 8,
+  },
+  headerProfileCenter: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'column',
+    gap: 4,
+  },
+  avatarContainerHeader: {
+    position: 'relative',
+    marginBottom: 6,
+  },
+  avatarHeader: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  avatarPlaceholderHeader: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#000000',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  editAvatarButtonHeader: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#000000',
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  profileNameHeader: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginTop: 2,
+    textAlign: 'center',
+  },
+  profileEmailHeader: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.7)',
+    marginTop: 1,
+    textAlign: 'center',
   },
   content: {
     flex: 1,
@@ -726,6 +803,24 @@ const styles = StyleSheet.create({
     fontWeight: '600', // Semibold per standards
     marginLeft: 8,
     marginRight: 8,
+  },
+  profileTypeBadge: {
+    alignSelf: 'center',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    marginBottom: 8,
+  },
+  driverBadge: {
+    backgroundColor: '#FF9500',
+  },
+  passengerBadge: {
+    backgroundColor: '#007AFF',
+  },
+  profileTypeBadgeText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 13,
   },
 });
 
