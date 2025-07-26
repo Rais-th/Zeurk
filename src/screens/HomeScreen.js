@@ -449,7 +449,7 @@ export default function HomeScreen({ navigation }) {
           >
             <View style={styles.rideTypeContent}>
               <Ionicons name="car-sport" size={20} color="rgba(255, 255, 255, 0.7)" />
-              <Text style={[styles.rideTypeText, { color: 'rgba(255, 255, 255, 0.7)' }]}>Auto</Text>
+              <Text style={[styles.rideTypeText, { color: 'rgba(255, 255, 255, 0.7)' }]}>Shopping</Text>
             </View>
           </TouchableOpacity>
           
