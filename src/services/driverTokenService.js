@@ -2,13 +2,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
+import { getUserType, promoteToDriver } from '../config/firebase';
 
 const DRIVER_TOKEN_KEY = 'driver_push_token';
 const DRIVER_STATUS_KEY = 'is_registered_driver';
 const BACKEND_URL = 'https://zeurk.vercel.app'; // Production URL
 
 class DriverTokenService {
-  async registerAsDriver() {
+  async registerAsDriver(userId, driverData = {}) {
     try {
       // Check if device can receive push notifications
       if (!Device.isDevice) {
@@ -39,6 +40,21 @@ class DriverTokenService {
         // Store locally
         await AsyncStorage.setItem(DRIVER_TOKEN_KEY, token.data);
         await AsyncStorage.setItem(DRIVER_STATUS_KEY, 'true');
+        
+        // Promouvoir l'utilisateur en driver dans Firebase
+        if (userId) {
+          try {
+            await promoteToDriver(userId, {
+              ...driverData,
+              pushToken: token.data,
+              deviceId: Constants.deviceId,
+              registeredAt: new Date().toISOString()
+            });
+            console.log('✅ Utilisateur promu en driver dans Firebase');
+          } catch (firebaseError) {
+            console.warn('⚠️ Erreur lors de la promotion Firebase, mais token enregistré localement:', firebaseError);
+          }
+        }
         
         // Send to backend
         await this.sendTokenToBackend(token.data);
@@ -123,10 +139,38 @@ class DriverTokenService {
     }
   }
 
-  async isRegisteredAsDriver() {
+  async isRegisteredAsDriver(userId = null) {
     try {
-      const status = await AsyncStorage.getItem(DRIVER_STATUS_KEY);
-      return status === 'true';
+      // Vérifier d'abord le statut local
+      const localStatus = await AsyncStorage.getItem(DRIVER_STATUS_KEY);
+      
+      // Si on a un userId, vérifier aussi dans Firebase
+      if (userId) {
+        try {
+          const userType = await getUserType(userId);
+          const isDriverInFirebase = userType === 'driver';
+          
+          // Si Firebase dit que c'est un driver mais pas le local, mettre à jour le local
+          if (isDriverInFirebase && localStatus !== 'true') {
+            await AsyncStorage.setItem(DRIVER_STATUS_KEY, 'true');
+            return true;
+          }
+          
+          // Si Firebase dit que ce n'est pas un driver mais le local dit que oui, corriger le local
+          if (!isDriverInFirebase && localStatus === 'true') {
+            await AsyncStorage.removeItem(DRIVER_STATUS_KEY);
+            return false;
+          }
+          
+          return isDriverInFirebase;
+        } catch (firebaseError) {
+          console.warn('⚠️ Erreur lors de la vérification Firebase, utilisation du statut local:', firebaseError);
+          return localStatus === 'true';
+        }
+      }
+      
+      // Fallback au statut local
+      return localStatus === 'true';
     } catch (error) {
       console.error('Error checking driver status:', error);
       return false;

@@ -1,22 +1,164 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Image, FlatList, Pressable, Button, Alert, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Image, FlatList, Pressable, Button, Alert, ActivityIndicator, RefreshControl } from 'react-native';
 import { FontAwesome5, Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { useUserProfile } from '../hooks/useUserProfile';
+import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { useNetworkStatus } from '../utils/networkManager';
 import { useAuth } from '../contexts/AuthContext';
+import { createUserDocument, getUserDocument, uploadImageToStorage, deleteImageFromStorage } from '../config/firebase';
 
 const ProfileScreen = ({ navigation }) => {
-  // Use offline-capable user profile hook
-  const { 
-    profile, 
-    loading, 
-    isOfflineData, 
-    updateProfile, 
-    updatePreferences 
-  } = useUserProfile();
+  // Simplified state management - no problematic hooks
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [isOfflineData, setIsOfflineData] = useState(false);
+  
   const { isConnected } = useNetworkStatus();
   const { signOut, user } = useAuth();
+
+  // Simple profile loading
+  useEffect(() => {
+    loadUserProfile();
+  }, [user]);
+
+  const loadUserProfile = async (isRefreshing = false) => {
+    if (user) {
+      if (isRefreshing) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+      
+      try {
+        console.log('🔄 Chargement du profil pour user:', user.id);
+        
+        // Try to get user data from Firestore first
+        const userData = await getUserDocument(user.id);
+        console.log('📄 Données Firestore:', userData);
+        
+        if (userData) {
+          // Use data from Firestore
+          const profileData = {
+            id: user.id || user.uid,
+            fullName: userData.fullName || user.user_metadata?.fullName || 'Utilisateur',
+            email: user.email || '',
+            phoneNumber: userData.phoneNumber || user.user_metadata?.phoneNumber || '',
+            avatar_url: userData.avatar_url || user.user_metadata?.avatar_url || '',
+            location: 'Kinshasa, RDC',
+            rating: 5.0,
+            totalRides: 0,
+            memberSince: new Date().toISOString(),
+            preferences: {
+              language: 'fr',
+              currency: 'FC',
+              notifications: {
+                rideUpdates: true,
+                promotions: false,
+                newsletter: true
+              },
+              privacy: {
+                shareLocation: true,
+                showProfile: true
+              }
+            },
+            paymentMethods: [],
+            emergency_contact: userData.emergency_contact || '',
+            date_of_birth: userData.date_of_birth || '',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          
+          console.log('📸 Avatar URL dans le profil:', profileData.avatar_url);
+          setProfile(profileData);
+        } else {
+          console.log('⚠️ Aucune donnée Firestore trouvée, utilisation des données auth');
+          // Fallback to basic user data
+          const fallbackProfile = {
+            id: user.id || user.uid,
+            fullName: user.user_metadata?.fullName || 'Utilisateur',
+            email: user.email || '',
+            phoneNumber: user.user_metadata?.phoneNumber || '',
+            avatar_url: user.user_metadata?.avatar_url || '',
+            location: 'Kinshasa, RDC',
+            rating: 5.0,
+            totalRides: 0,
+            memberSince: new Date().toISOString(),
+            preferences: {
+              language: 'fr',
+              currency: 'FC',
+              notifications: {
+                rideUpdates: true,
+                promotions: false,
+                newsletter: true
+              },
+              privacy: {
+                shareLocation: true,
+                showProfile: true
+              }
+            },
+            paymentMethods: [],
+            emergency_contact: '',
+            date_of_birth: '',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          
+          console.log('📸 Avatar URL fallback:', fallbackProfile.avatar_url);
+          setProfile(fallbackProfile);
+        }
+      } catch (error) {
+        console.error('❌ Erreur lors du chargement du profil:', error);
+        // Fallback to basic user data on error
+        const errorProfile = {
+          id: user.id || user.uid,
+          fullName: user.user_metadata?.fullName || 'Utilisateur',
+          email: user.email || '',
+          phoneNumber: user.user_metadata?.phoneNumber || '',
+          avatar_url: user.user_metadata?.avatar_url || '',
+          location: 'Kinshasa, RDC',
+          rating: 5.0,
+          totalRides: 0,
+          memberSince: new Date().toISOString(),
+          preferences: {
+            language: 'fr',
+            currency: 'FC',
+            notifications: {
+              rideUpdates: true,
+              promotions: false,
+              newsletter: true
+            },
+            privacy: {
+              shareLocation: true,
+              showProfile: true
+            }
+          },
+          paymentMethods: [],
+          emergency_contact: '',
+          date_of_birth: '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        
+        console.log('📸 Avatar URL error fallback:', errorProfile.avatar_url);
+        setProfile(errorProfile);
+      } finally {
+        if (isRefreshing) {
+          setRefreshing(false);
+        } else {
+          setLoading(false);
+        }
+      }
+    } else {
+      setProfile(null);
+    }
+  };
+
+  const onRefresh = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await loadUserProfile(true);
+  };
 
   const handleLogout = async () => {
     try {
@@ -38,7 +180,6 @@ const ProfileScreen = ({ navigation }) => {
               if (error) {
                 Alert.alert('Erreur', 'Impossible de se déconnecter. Veuillez réessayer.');
               }
-              // Navigation will be handled automatically by AuthContext state change
             },
           },
         ]
@@ -51,7 +192,6 @@ const ProfileScreen = ({ navigation }) => {
   const handleLogin = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     
-    // Show options for passenger or driver login
     Alert.alert(
       'Type de compte',
       'Quel type de compte souhaitez-vous créer ou utiliser ?',
@@ -72,6 +212,105 @@ const ProfileScreen = ({ navigation }) => {
     );
   };
 
+  const handleImagePick = async () => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      
+      // Request permissions
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permission requise',
+          'Nous avons besoin de votre permission pour accéder à votre galerie.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      // Launch image picker
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets[0]) {
+        const selectedImage = result.assets[0];
+        
+        // Show loading state
+        setLoading(true);
+        
+        try {
+          // Compress and resize the image
+          const manipulatedImage = await ImageManipulator.manipulateAsync(
+            selectedImage.uri,
+            [{ resize: { width: 400, height: 400 } }],
+            { 
+              compress: 0.8, 
+              format: ImageManipulator.SaveFormat.JPEG 
+            }
+          );
+
+          // Create unique filename with user ID
+          const fileName = `avatars/${user.id}/avatar_${Date.now()}.jpg`;
+          
+          // Delete old avatar if it exists in Firebase Storage
+          if (profile?.avatar_url && profile.avatar_url.includes('firebase')) {
+            try {
+              const oldFileName = profile.avatar_url.split('/').pop();
+              if (oldFileName) {
+                await deleteImageFromStorage(`avatars/${user.id}/${oldFileName}`);
+              }
+            } catch (error) {
+              console.log('Impossible de supprimer l\'ancien avatar:', error);
+            }
+          }
+
+          // Upload to Firebase Storage
+          const downloadURL = await uploadImageToStorage(manipulatedImage.uri, fileName);
+          console.log('📤 URL de téléchargement obtenue:', downloadURL);
+          
+          // Update user document in Firestore
+          await createUserDocument(user.id, {
+            fullName: profile.fullName,
+            phoneNumber: profile.phoneNumber,
+            avatar_url: downloadURL,
+            email: user.email,
+            updatedAt: new Date().toISOString()
+          });
+          console.log('💾 Document Firestore mis à jour avec avatar_url:', downloadURL);
+
+          // Update profile with new image URL immediately
+          const updatedProfile = {
+            ...profile,
+            avatar_url: downloadURL
+          };
+          
+          console.log('🔄 Mise à jour du profil local avec avatar_url:', updatedProfile.avatar_url);
+          setProfile(updatedProfile);
+
+          console.log('📸 Photo de profil uploadée avec succès:', downloadURL);
+          
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          Alert.alert('Succès', 'Photo de profil mise à jour !');
+          
+        } catch (uploadError) {
+          console.error('❌ Erreur lors de l\'upload:', uploadError);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          Alert.alert('Erreur', 'Impossible d\'uploader l\'image. Veuillez réessayer.');
+        } finally {
+          setLoading(false);
+        }
+      }
+    } catch (error) {
+      console.error('❌ Erreur lors de la sélection d\'image:', error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert('Erreur', 'Impossible de sélectionner l\'image. Veuillez réessayer.');
+      setLoading(false);
+    }
+  };
+
   // Different menu items based on authentication status
   const authenticatedMenuItems = [
     { id: '1', title: 'Modifier le profil', icon: 'person-outline', screen: 'EditProfile' },
@@ -83,128 +322,183 @@ const ProfileScreen = ({ navigation }) => {
       icon: 'gift-outline', 
       screen: 'InviteFriendScreen',
       promotion: 'Gagnez 5$',
-      promotionColor: '#4CAF50'
+      promotionColor: '#51cf66'
     },
     { id: '5', title: 'Support & Assistance', icon: 'help-circle-outline', screen: 'SupportAndAssistanceScreen' },
     { id: '6', title: 'Proposer une nouvelle fonctionnalité', icon: 'bulb-outline', screen: 'SuggestFeatureScreen' },
   ];
 
   const guestMenuItems = [
-    { id: '1', title: 'Créer un compte Passager', icon: 'person-add-outline', action: 'createPassengerAccount' },
+    { id: '1', title: 'Devenir passager', icon: 'person-add-outline', action: 'createPassengerAccount' },
     { id: '2', title: 'Devenir Conducteur', icon: 'car-outline', action: 'createDriverAccount' },
-    { id: '5', title: 'Support & Assistance', icon: 'help-circle-outline', screen: 'SupportAndAssistanceScreen' },
-    { id: '6', title: 'Proposer une nouvelle fonctionnalité', icon: 'bulb-outline', screen: 'SuggestFeatureScreen' },
+    { id: '3', title: 'Se connecter', icon: 'log-in-outline', action: 'login' },
   ];
 
   const menuItems = user ? authenticatedMenuItems : guestMenuItems;
 
-  const handleMenuItemPress = (item) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    
-    if (item.action === 'createPassengerAccount') {
-      navigation.navigate('PassengerAuth');
-    } else if (item.action === 'createDriverAccount') {
-      navigation.navigate('Auth');
-    } else if (item.screen) {
-      navigation.navigate(item.screen);
-    }
-  };
-
   const renderSettingItem = ({ item }) => (
     <TouchableOpacity
-      style={styles.menuItemContainer}
-      onPress={() => handleMenuItemPress(item)}
+      style={styles.settingItem}
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        
+        if (item.action === 'createPassengerAccount') {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          navigation.navigate('PassengerAuth', { forceSignUp: true });
+        } else if (item.action === 'createDriverAccount') {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          navigation.navigate('Auth', { forceSignUp: true });
+        } else if (item.action === 'login') {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          handleLogin();
+        } else if (item.screen) {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          navigation.navigate(item.screen);
+        }
+      }}
     >
-      <View style={styles.menuItemContent}>
-        <Ionicons name={item.icon} size={24} color="#fff" />
-        <Text style={styles.menuItemTitle}>{item.title}</Text>
-        {item.promotion && (
-          <Text style={[styles.promotion, { color: item.promotionColor }]}>
-            {item.promotion}
-          </Text>
-        )}
+      <View style={styles.settingItemLeft}>
+        <View style={styles.iconContainer}>
+          <Ionicons name={item.icon} size={24} color="#fff" />
+        </View>
+        <View style={styles.settingItemContent}>
+          <Text style={styles.settingItemTitle}>{item.title}</Text>
+          {item.promotion && (
+            <Text style={[styles.promotionText, { color: item.promotionColor }]}>
+              {item.promotion}
+            </Text>
+          )}
+        </View>
       </View>
-      <Ionicons name="chevron-forward" size={24} color="rgba(255, 255, 255, 0.6)" />
+      <Ionicons name="chevron-forward" size={20} color="rgba(255, 255, 255, 0.6)" />
     </TouchableOpacity>
   );
 
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#fff" />
+        <Text style={styles.loadingText}>Chargement du profil...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      {/* Header avec photo de profil et nom complet */}
+      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          navigation.goBack();
-        }}>
-          {/* <Ionicons name="arrow-back" size={28} color="#fff" /> */}
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
-        
-        {/* Offline indicator */}
-        {isOfflineData && (
-          <View style={styles.offlineIndicator}>
-            <Ionicons name="cloud-offline" size={16} color="#FF9500" />
-            <Text style={styles.offlineText}>Mode hors ligne</Text>
-          </View>
-        )}
-        
-        {loading && user ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#fff" />
-            <Text style={styles.loadingText}>Chargement du profil...</Text>
-          </View>
-        ) : user ? (
-          <>
-            {profile?.avatar_url ? (
-              <Image source={{ uri: profile.avatar_url }} style={styles.profileImage} />
-            ) : (
-              <View style={styles.profileImagePlaceholder}>
-                <Ionicons name="person-circle-outline" size={80} color="#ccc" />
-              </View>
-            )}
-            <Text style={styles.fullName}>
-              {profile?.full_name || profile?.name || 'Utilisateur'}
-            </Text>
-            {profile?.email && (
-              <Text style={styles.email}>{profile.email}</Text>
-            )}
-          </>
-        ) : (
-          <>
-            <View style={styles.profileImagePlaceholder}>
-              <Ionicons name="person-circle-outline" size={80} color="#ccc" />
-            </View>
-            <Text style={styles.fullName}>Invité</Text>
-            <Text style={styles.email}>Connectez-vous pour accéder à toutes les fonctionnalités</Text>
-          </>
+        {user && (
+          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+            <Ionicons name="log-out-outline" size={24} color="#fff" />
+          </TouchableOpacity>
         )}
       </View>
 
-      {/* Liste des réglages */}
-      <FlatList
-        data={menuItems}
-        renderItem={renderSettingItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.settingsList}
-      />
+      {/* Content */}
+      <View style={styles.content}>
+        {/* Profile Section */}
+        <View style={styles.profileSection}>
+          {user ? (
+            <>
+              <View style={styles.profileInfo}>
+                <View style={styles.avatarContainer}>
+                  {profile?.avatar_url && profile.avatar_url.trim() !== '' ? (
+                    <Image 
+                      source={{ 
+                        uri: profile.avatar_url,
+                        headers: {
+                          'Cache-Control': 'no-cache'
+                        }
+                      }} 
+                      style={styles.avatar}
+                      onError={(error) => {
+                        console.log('❌ Erreur de chargement image:', error.nativeEvent);
+                        // Fallback to placeholder if image fails to load
+                        setProfile(prev => ({ ...prev, avatar_url: '' }));
+                      }}
+                      onLoad={() => console.log('✅ Image chargée avec succès:', profile.avatar_url)}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={styles.avatarPlaceholder}>
+                      <Ionicons name="person" size={32} color="#fff" />
+                    </View>
+                  )}
+                  <TouchableOpacity style={styles.editAvatarButton} onPress={handleImagePick}>
+                    <Ionicons name="camera" size={16} color="#fff" />
+                  </TouchableOpacity>
+                </View>
+                
+                <View style={styles.profileDetails}>
+                  <Text style={styles.profileName}>{profile?.fullName || 'Utilisateur'}</Text>
+                  <Text style={styles.profileEmail}>{profile?.email || ''}</Text>
+                  <View style={styles.profileStats}>
+                    <View style={styles.statItem}>
+                      <Text style={styles.statNumber}>{profile?.rating || 5.0}</Text>
+                      <Text style={styles.statLabel}>Note</Text>
+                    </View>
+                    <View style={styles.statDivider} />
+                    <View style={styles.statItem}>
+                      <Text style={styles.statNumber}>{profile?.totalRides || 0}</Text>
+                      <Text style={styles.statLabel}>Courses</Text>
+                    </View>
+                    <View style={styles.statDivider} />
+                    <View style={styles.statItem}>
+                      <Text style={styles.statNumber}>{profile?.memberSince ? new Date(profile.memberSince).getFullYear() : new Date().getFullYear()}</Text>
+                      <Text style={styles.statLabel}>Membre</Text>
+                    </View>
+                  </View>
+                  
+                  {/* Bouton spécial pour devenir conducteur */}
+                  <TouchableOpacity 
+                    style={styles.becomeDriverButton}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      navigation.navigate('Auth', { forceSignUp: true });
+                    }}
+                  >
+                    <Ionicons name="car-sport" size={20} color="#FF9500" />
+                    <Text style={styles.becomeDriverText}>Devenir Conducteur</Text>
+                    <Ionicons name="chevron-forward" size={16} color="#FF9500" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+              
+              {isOfflineData && (
+                <View style={styles.offlineIndicator}>
+                  <Ionicons name="cloud-offline-outline" size={16} color="#FF9500" />
+                  <Text style={styles.offlineText}>Mode hors ligne</Text>
+                </View>
+              )}
+            </>
+          ) : (
+            <View style={styles.guestSection}>
+              <View style={styles.avatarPlaceholder}>
+                <Ionicons name="person" size={32} color="#fff" />
+              </View>
+              <Text style={styles.guestTitle}>Connectez-vous</Text>
+              <Text style={styles.guestSubtitle}>Accédez à toutes les fonctionnalités</Text>
+            </View>
+          )}
+        </View>
 
-      {/* Bouton de déconnexion ou connexion */}
-      {user ? (
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutButtonText}>Déconnexion</Text>
-        </TouchableOpacity>
-      ) : (
-        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-          <Text style={styles.loginButtonText}>Se connecter</Text>
-        </TouchableOpacity>
-      )}
-
-      {/* Nouveau bouton Annuler */}
-      <TouchableOpacity style={styles.cancelButton} onPress={() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        navigation.goBack();
-      }}>
-        <Text style={styles.cancelButtonText}>Quitter</Text>
-      </TouchableOpacity>
+        {/* Menu Items */}
+        <View style={styles.menuSection}>
+          <FlatList
+            data={menuItems}
+            renderItem={renderSettingItem}
+            keyExtractor={(item) => item.id}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.menuList}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#FF9500']} />
+            }
+          />
+        </View>
+      </View>
     </View>
   );
 };
@@ -212,179 +506,226 @@ const ProfileScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
-  },
-  header: {
-    alignItems: 'center',
-    paddingTop: 90,
-    paddingBottom: 20,
-    backgroundColor: '#000',
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    marginBottom: 20,
-    position: 'relative',
-  },
-  backButton: {
-    position: 'absolute',
-    top: 50,
-    left: 20,
-    zIndex: 10,
-  },
-  profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
-    marginBottom: 10,
-  },
-  profileImagePlaceholder: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#000000',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  fullName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginTop: 10,
-  },
-  email: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.7)',
-    marginTop: 4,
-  },
-  offlineIndicator: {
-    position: 'absolute',
-    top: 50,
-    right: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 149, 0, 0.2)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  offlineText: {
-    color: '#FF9500',
-    fontSize: 12,
-    fontWeight: '600',
-    marginLeft: 4,
+    backgroundColor: '#000000', // Primary background per design standards
   },
   loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 20,
+    backgroundColor: '#000000',
   },
   loadingText: {
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: 'rgba(255, 255, 255, 0.7)', // Secondary text per standards
+    marginTop: 16,
     fontSize: 16,
-    marginTop: 12,
   },
-  settingsList: {
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 20,
+    paddingTop: 90, // Standard header padding per design standards
+    paddingBottom: 40, // Standard header padding per design standards
+  },
+  backButton: {
+    padding: 8,
+  },
+  logoutButton: {
+    padding: 8,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20, // Standard screen padding per design standards
+  },
+  profileSection: {
+    paddingBottom: 1, // Réduit de 20 à 16
+  },
+  profileInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16, // Réduit de 20 à 16
+  },
+  avatarContainer: {
+    position: 'relative',
+    marginRight: 16, // Réduit de 20 à 16
+  },
+  avatar: {
+    width: 80, // Réduit de 100 à 80
+    height: 80, // Réduit de 100 à 80
+    borderRadius: 40, // Réduit de 50 à 40
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+  },
+  avatarPlaceholder: {
+    width: 80, // Réduit de 100 à 80
+    height: 80, // Réduit de 100 à 80
+    borderRadius: 40, // Réduit de 50 à 40
+    backgroundColor: '#000000', // Primary background per standards
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)', // Default border per standards
+  },
+  editAvatarButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#000000',
+    borderRadius: 16, // Réduit de 20 à 16
+    width: 28, // Réduit de 32 à 28
+    height: 28, // Réduit de 32 à 28
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)', // Active border per standards
+  },
+  profileDetails: {
+    flex: 1,
+  },
+  profileName: {
+    fontSize: 22, // Réduit de 24 à 22
+    fontWeight: 'bold',
+    color: '#FFFFFF', // Primary text per standards
+    marginBottom: 2, // Réduit de 4 à 2
+  },
+  profileEmail: {
+    fontSize: 16, // Body text per standards
+    color: 'rgba(255, 255, 255, 0.7)', // Secondary text per standards
+    marginBottom: 12, // Réduit de 16 à 12
+  },
+  profileStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  statNumber: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF', // Primary text per standards
+  },
+  statLabel: {
+    fontSize: 12, // Small text per standards
+    color: 'rgba(255, 255, 255, 0.4)', // Tertiary text per standards
+    marginTop: 2,
+  },
+  statDivider: {
+    width: 1,
+    height: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)', // Default border per standards
+    marginHorizontal: 10,
+  },
+  offlineIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 149, 0, 0.1)', // Warning state per standards
+    borderColor: '#FF9500', // Accent orange per standards
+    borderWidth: 1,
+    borderRadius: 15, // Standard border radius
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginTop: 16,
+  },
+  offlineText: {
+    color: '#FF9500', // Accent orange per standards
+    marginLeft: 8,
+    fontSize: 14, // Caption size per standards
+  },
+  guestSection: {
+    alignItems: 'center',
+    paddingVertical: 10, // Réduit de 40 à 20 pour remonter la section
+  },
+  guestTitle: {
+    fontSize: 24, // h2 size per standards
+    fontWeight: 'bold',
+    color: '#FFFFFF', // Primary text per standards
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  guestSubtitle: {
+    fontSize: 16, // Body text per standards
+    color: 'rgba(255, 255, 255, 0.7)', // Secondary text per standards
+    textAlign: 'center',
+    marginBottom: 24, // Standard spacing per design standards
+  },
+  loginButton: {
+    backgroundColor: '#000000', // Primary button background per standards
+    paddingHorizontal: 32,
+    paddingVertical: 16, // Standard button padding per standards
+    borderRadius: 15, // Standard border radius per standards
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)', // Primary button border per standards
+    alignItems: 'center',
+  },
+  loginButtonText: {
+    color: '#FFFFFF', // Primary text per standards
+    fontSize: 16, // Body text per standards
+    fontWeight: '600', // Semibold per standards
+  },
+  menuSection: {
+    flex: 1,
+  },
+  menuList: {
+    paddingBottom: 20, // Standard spacing per design standards
   },
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#000000',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    borderRadius: 15,
-    marginBottom: 10,
+    justifyContent: 'space-between',
+    backgroundColor: '#000000', // Primary background per standards
+    paddingHorizontal: 20, // Standard padding per standards
+    paddingVertical: 16, // Standard padding per standards
+    borderRadius: 15, // Standard border radius per standards
+    marginBottom: 16, // Standard spacing per standards
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.1)', // Default border per standards
   },
-  settingIcon: {
-    marginRight: 15,
-  },
-  settingText: {
-    flex: 1,
-    fontSize: 16,
-    color: '#fff',
-    fontWeight: '500',
-  },
-  chevronIcon: {
-    marginLeft: 'auto',
-  },
-  logoutButton: {
-    backgroundColor: '#000000',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    borderRadius: 15,
-    marginHorizontal: 20,
-    marginTop: 20,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    alignItems: 'center',
-  },
-  logoutButtonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  loginButton: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    borderRadius: 15,
-    marginHorizontal: 20,
-    marginTop: 20,
-    marginBottom: 10,
-    alignItems: 'center',
-  },
-  loginButtonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  cancelButton: {
-    backgroundColor: 'transparent',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    borderRadius: 15,
-    marginHorizontal: 20,
-    marginTop: 5,
-    marginBottom: 40,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    alignItems: 'center',
-  },
-  cancelButtonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  menuItemContainer: {
+  settingItemLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  menuItemContent: {
     flex: 1,
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20, // Circle per standards
+    backgroundColor: 'rgba(255, 255, 255, 0.1)', // Glass surface per standards
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16, // Standard spacing per design standards
+  },
+  settingItemContent: {
+    flex: 1,
+  },
+  settingItemTitle: {
+    fontSize: 16, // Body text per standards
+    color: '#FFFFFF', // Primary text per standards
+    fontWeight: '500', // Medium per standards
+  },
+  promotionText: {
+    fontSize: 12, // Small text per standards
+    marginTop: 2,
+    fontWeight: '600', // Semibold per standards
+  },
+  becomeDriverButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'rgba(255, 149, 0, 0.1)', // Accent orange per standards
+    paddingHorizontal: 16,
+    paddingVertical: 12, // Standard button padding per standards
+    borderRadius: 15, // Standard border radius per standards
+    borderWidth: 1,
+    borderColor: 'rgba(255, 149, 0, 0.2)', // Accent orange per standards
+    marginTop: 16,
   },
-  menuItemTitle: {
-    color: '#fff',
-    fontSize: 16,
-    marginLeft: 12,
-  },
-  promotion: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginLeft: 'auto',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+  becomeDriverText: {
+    color: '#FF9500', // Accent orange per standards
+    fontSize: 14, // Body text per standards
+    fontWeight: '600', // Semibold per standards
+    marginLeft: 8,
+    marginRight: 8,
   },
 });
 

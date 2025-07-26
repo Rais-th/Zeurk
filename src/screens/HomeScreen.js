@@ -1,12 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, TextInput, ScrollView, Platform, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Platform,
+  Alert,
+  Dimensions,
+} from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import * as Location from 'expo-location';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '../contexts/AuthContext';
+import { driverTokenService } from '../services/driverTokenService';
+import { getUserType, promoteToDriver } from '../config/firebase';
 
 const mapStyle = [
   {
@@ -135,6 +144,7 @@ export default function HomeScreen({ navigation }) {
   const [userLocation, setUserLocation] = useState(null);
   const [userCity, setUserCity] = useState('...');
   const [userName, setUserName] = useState('Rais');
+  const [isRegisteredDriver, setIsRegisteredDriver] = useState(false);
   const [mapRegion, setMapRegion] = useState({
     latitude: -4.4419,
     longitude: 15.2663,
@@ -142,34 +152,127 @@ export default function HomeScreen({ navigation }) {
     longitudeDelta: 0.04,
   });
 
-  const handleDrivePress = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    
-    // Check if user is authenticated before accessing driver dashboard
-    if (user) {
-      navigation.navigate('DriverDashboard');
-    } else {
-      // Show authentication screen for driver access
-      Alert.alert(
-        'Authentification requise',
-        'Vous devez vous connecter pour accéder au tableau de bord conducteur.',
-        [
-          {
-            text: 'Annuler',
-            style: 'cancel'
-          },
-          {
-            text: 'Se connecter',
-            onPress: () => navigation.navigate('Auth')
-          }
-        ]
-      );
+  const handleDrivePress = async () => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      
+      // Vérifier si l'utilisateur est bien un driver
+      if (user) {
+        const userType = await getUserType(user.id);
+        const isDriverInService = await driverTokenService.isRegisteredAsDriver(user.id);
+        
+        if (userType === 'driver' || isDriverInService) {
+          // L'utilisateur est un driver, naviguer vers SettingsPanel
+          navigation.navigate('DriverDashboard', { 
+            screen: 'SettingsPanel',
+            initial: false 
+          });
+        } else {
+          // L'utilisateur n'est pas encore un driver, l'encourager à s'inscrire
+          Alert.alert(
+            'Devenir Conducteur',
+            'Vous devez d\'abord vous inscrire comme conducteur pour accéder aux paramètres.',
+            [
+              { text: 'Annuler', style: 'cancel' },
+              { 
+                text: 'S\'inscrire', 
+                onPress: () => navigation.navigate('Auth')
+              }
+            ]
+          );
+        }
+      } else {
+        // L'utilisateur n'est pas connecté
+        Alert.alert(
+          'Connexion requise',
+          'Vous devez vous connecter pour accéder aux paramètres conducteur.',
+          [
+            { text: 'Annuler', style: 'cancel' },
+            { 
+              text: 'Se connecter', 
+              onPress: () => navigation.navigate('Auth')
+            }
+          ]
+        );
+      }
+    } catch (error) {
+      console.error('Erreur lors de l\'accès aux paramètres driver:', error);
+      Alert.alert('Erreur', 'Impossible d\'accéder aux paramètres conducteur.');
     }
   };
 
   useEffect(() => {
-    getCurrentLocation();
-  }, []);
+    if (user) {
+      getCurrentLocation();
+      checkDriverStatus();
+      // Correction automatique si nécessaire
+      autoCorrectDriverStatus();
+    }
+  }, [user]);
+
+  // Fonction pour corriger automatiquement le statut driver si nécessaire
+  const autoCorrectDriverStatus = async () => {
+    if (user && user.user_metadata?.userType === 'driver') {
+      try {
+        console.log('🔧 Correction automatique du statut driver pour:', user.id);
+        await promoteToDriver(user.id, {
+          email: user.email,
+          displayName: user.user_metadata?.fullName || 'Driver',
+          phoneNumber: user.user_metadata?.phoneNumber || '',
+          isVerified: false,
+          isAvailable: false,
+          rating: 5.0,
+          totalRides: 0,
+          autoCorrectedAt: new Date().toISOString()
+        });
+        console.log('✅ Statut driver corrigé automatiquement');
+        await checkDriverStatus();
+      } catch (error) {
+        console.error('❌ Erreur lors de la correction automatique:', error);
+      }
+    }
+  };
+
+  const checkDriverStatus = async () => {
+    console.log('🔍 checkDriverStatus appelé avec user:', user ? user.id : 'null');
+    
+    if (user) {
+      try {
+        console.log('🔍 Vérification du statut pour user ID:', user.id);
+        
+        // Vérifier le statut dans Firebase
+        const userType = await getUserType(user.id);
+        const isDriverInFirebase = userType === 'driver';
+        
+        console.log('🔍 getUserType résultat:', userType);
+        console.log('🔍 isDriverInFirebase:', isDriverInFirebase);
+        
+        // Vérifier le statut dans driverTokenService
+        const isDriverInService = await driverTokenService.isRegisteredAsDriver(user.id);
+        
+        console.log('🔍 isDriverInService:', isDriverInService);
+        
+        // Le bouton Drive s'affiche si l'utilisateur est driver dans Firebase OU dans le service
+        const shouldShowDriveButton = isDriverInFirebase || isDriverInService;
+        
+        console.log('🔍 Statut Driver final:', {
+          userId: user.id,
+          firebaseType: userType,
+          isDriverInFirebase,
+          isDriverInService,
+          shouldShowDriveButton
+        });
+        
+        setIsRegisteredDriver(shouldShowDriveButton);
+      } catch (error) {
+        console.error('❌ Erreur lors de la vérification du statut conducteur:', error);
+        setIsRegisteredDriver(false);
+      }
+    } else {
+      console.log('🔍 Aucun utilisateur connecté, isRegisteredDriver = false');
+      setIsRegisteredDriver(false);
+    }
+  };
 
   const getCurrentLocation = async () => {
     try {
@@ -251,7 +354,7 @@ export default function HomeScreen({ navigation }) {
         end={{ x: 1, y: 1 }}
         style={[styles.gradientOverlay, { opacity: 0.5 }]}
       />
-      <BlurView intensity={20} style={[styles.blurOverlay, { opacity: 0.3 }]} />
+      <View style={[styles.blurOverlay, { opacity: 0.3 }]} />
 
       {/* Header minimal avec localisation */}
       <View style={styles.topHeader}>
@@ -322,24 +425,45 @@ export default function HomeScreen({ navigation }) {
       <View style={styles.bottomPanel}>
         <View style={styles.rideButtons}>
           <TouchableOpacity style={[styles.rideType, styles.activeRideType]}>
-            <Ionicons name="car" size={20} color="#0A84FF" />
-            <Text style={[styles.rideTypeText, { color: '#0A84FF' }]}>Course</Text>
+            <View style={styles.rideTypeContent}>
+              <Ionicons name="car" size={20} color="#0A84FF" />
+              <Text style={[styles.rideTypeText, { color: '#0A84FF' }]}>Course</Text>
+            </View>
           </TouchableOpacity>
+          
+          {isRegisteredDriver && (
+            <TouchableOpacity 
+              style={styles.rideType}
+              onPress={handleDrivePress}
+            >
+              <View style={styles.rideTypeContent}>
+                <Ionicons name="speedometer" size={20} color="rgba(255, 255, 255, 0.7)" />
+                <Text style={[styles.rideTypeText, { color: 'rgba(255, 255, 255, 0.7)' }]}>Drive</Text>
+              </View>
+            </TouchableOpacity>
+          )}
           
           <TouchableOpacity 
             style={styles.rideType}
             onPress={() => navigation.navigate('VehicleMarketplace')}
           >
-            <Ionicons name="car-sport" size={20} color="rgba(255, 255, 255, 0.7)" />
-            <Text style={[styles.rideTypeText, { color: 'rgba(255, 255, 255, 0.7)' }]}>Auto</Text>
+            <View style={styles.rideTypeContent}>
+              <Ionicons name="car-sport" size={20} color="rgba(255, 255, 255, 0.7)" />
+              <Text style={[styles.rideTypeText, { color: 'rgba(255, 255, 255, 0.7)' }]}>Auto</Text>
+            </View>
           </TouchableOpacity>
           
           <TouchableOpacity 
             style={styles.rideType}
-            onPress={handleDrivePress}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              navigation.navigate('Profile');
+            }}
           >
-            <Ionicons name="speedometer" size={20} color="rgba(255, 255, 255, 0.7)" />
-            <Text style={[styles.rideTypeText, { color: 'rgba(255, 255, 255, 0.7)' }]}>Drive</Text>
+            <View style={styles.rideTypeContent}>
+              <Ionicons name="person" size={20} color="rgba(255, 255, 255, 0.7)" />
+              <Text style={[styles.rideTypeText, { color: 'rgba(255, 255, 255, 0.7)' }]}>Profil</Text>
+            </View>
           </TouchableOpacity>
         </View>
       </View>
@@ -517,9 +641,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: -13,
     backgroundColor: '#000',
-    paddingTop: 15,
-    paddingBottom: 32,
-    paddingHorizontal: 22,
+    paddingTop: 20,
+    paddingBottom: 35,
+    paddingHorizontal: 20,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 50,
     zIndex: 1001,
@@ -547,14 +671,15 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   rideType: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 13,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     borderRadius: 16,
     flex: 1,
     justifyContent: 'center',
-    margin: 3,
+    margin: 2,
+    minHeight: 60,
   },
   activeRideType: {
     backgroundColor: 'rgba(10, 132, 255, 0.1)',
@@ -575,10 +700,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(10, 132, 255, 0.3)',
   },
+  rideTypeContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+  },
   rideTypeText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
-    marginLeft: 6,
+    marginTop: 6,
+    textAlign: 'center',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },

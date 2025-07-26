@@ -224,15 +224,45 @@ screenContainer: {
 }
 
 header: {
-  paddingTop: 90,        // Account for status bar
-  paddingBottom: 40,
+  paddingTop: 60,         // Reduced from 90 for better space efficiency
+  paddingBottom: 30,      // Reduced from 40 for better space efficiency
   paddingHorizontal: 20,
-  alignItems: 'center'
+  alignItems: 'center',
+  position: 'relative'    // Required for absolute positioned back button
 }
 
 content: {
   flex: 1,
   paddingHorizontal: 20
+}
+```
+
+### Back Button Positioning
+```javascript
+backButton: {
+  position: 'absolute',
+  top: 60,                // Aligns with header paddingTop
+  left: 20,               // Standard horizontal padding
+  borderRadius: 20,
+  padding: 8,
+  zIndex: 1               // Ensures button is above other elements
+}
+```
+
+### Title Alignment
+```javascript
+title: {
+  fontSize: 32,
+  fontWeight: 'bold',
+  color: '#fff',
+  marginBottom: 8,
+  textAlign: 'center'     // Centers title with back button
+}
+
+subtitle: {
+  fontSize: 16,
+  color: 'rgba(255, 255, 255, 0.7)',
+  textAlign: 'center'
 }
 ```
 
@@ -355,16 +385,88 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000'
   },
   header: {
-    paddingTop: 90,
-    paddingBottom: 40,
+    paddingTop: 60,
+    paddingBottom: 30,
     paddingHorizontal: 20,
-    alignItems: 'center'
+    alignItems: 'center',
+    position: 'relative'
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 8
+    marginBottom: 8,
+    textAlign: 'center'
+  },
+  subtitle: {
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.7)',
+    textAlign: 'center'
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20
+  }
+});
+```
+
+### Authentication Screen Template
+```javascript
+const AuthScreen = ({ navigation }) => {
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        
+        <Text style={styles.title}>
+          {isSignUp ? 'Inscription' : 'Connexion'}
+        </Text>
+        <Text style={styles.subtitle}>
+          {isSignUp ? 'Rejoignez notre équipe' : 'Connectez-vous'}
+        </Text>
+      </View>
+      
+      <View style={styles.content}>
+        {/* Form content */}
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000000'
+  },
+  header: {
+    alignItems: 'center',
+    paddingTop: 60,
+    paddingBottom: 30,
+    backgroundColor: '#000',
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    marginBottom: 30,
+    position: 'relative'
+  },
+  backButton: {
+    position: 'absolute',
+    top: 60,
+    left: 20,
+    borderRadius: 20,
+    padding: 8,
+    zIndex: 1
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 8,
+    textAlign: 'center'
   },
   subtitle: {
     fontSize: 16,

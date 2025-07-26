@@ -53,7 +53,9 @@ export default {
           "photosPermission": "L'application accède à vos photos pour vous permettre de changer votre photo de profil.",
           "cameraPermission": "L'application accède à votre appareil photo pour vous permettre de prendre une photo de profil."
         }
-      ]
+      ],
+      // Firebase configuration removed for Expo Go compatibility
+      // Use web SDK instead of React Native Firebase
     ]
   }
 }

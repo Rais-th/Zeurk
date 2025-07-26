@@ -1,18 +1,20 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useContext } from 'react';
+import { AuthContext } from '../contexts/AuthContext';
+import { getUserDocument, createUserDocument } from '../config/firebase';
 import offlineStorage from '../utils/offlineStorage';
 import { useNetworkStatus } from '../utils/networkManager';
 
-// Mock user profile data
-const mockUserProfile = {
-  id: 'user_123',
-  name: 'John Doe',
-  email: 'john.doe@example.com',
-  phone: '+243123456789',
-  avatar: 'https://via.placeholder.com/150/1a1a1a/ffffff?text=JD',
+// Default user profile structure
+const getDefaultProfile = (user) => ({
+  id: user?.id || user?.uid,
+  fullName: user?.displayName || '',
+  email: user?.email || '',
+  phoneNumber: '',
+  avatar_url: user?.photoURL || '',
   location: 'Kinshasa, RDC',
-  rating: 4.8,
-  totalRides: 45,
-  memberSince: '2023-06-15',
+  rating: 5.0,
+  totalRides: 0,
+  memberSince: new Date().toISOString(),
   preferences: {
     language: 'fr',
     currency: 'FC',
@@ -26,25 +28,27 @@ const mockUserProfile = {
       showProfile: true
     }
   },
-  paymentMethods: [
-    {
-      id: 'pm_1',
-      type: 'mobile_money',
-      provider: 'M-Pesa',
-      number: '+243123456789',
-      isDefault: true
-    }
-  ]
-};
+  paymentMethods: [],
+  emergency_contact: '',
+  date_of_birth: '',
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString()
+});
 
 export const useUserProfile = () => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isOfflineData, setIsOfflineData] = useState(false);
+  const { user } = useContext(AuthContext);
   const { isConnected } = useNetworkStatus();
 
-  // Load user profile from cache and/or server
+  // Load user profile from cache and/or Firebase
   const loadProfile = useCallback(async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     
     try {
@@ -55,41 +59,55 @@ export const useUserProfile = () => {
         setIsOfflineData(true);
         setLoading(false);
         console.log('📱 Loaded user profile from offline cache');
-      } else {
-        // If no cache, use mock data as fallback
-        setProfile(mockUserProfile);
-        await offlineStorage.saveUserProfile(mockUserProfile);
-        setIsOfflineData(true);
-        setLoading(false);
-        console.log('📱 Initialized user profile with mock data');
       }
 
-      // If online, try to fetch fresh data
+      // If online, try to fetch fresh data from Firebase
       if (isConnected) {
         try {
-          // Simulate API delay
-          await new Promise(resolve => setTimeout(resolve, 600));
+          const firebaseProfile = await getUserDocument(user.uid || user.id);
           
-          // In a real app, this would be an actual API call
-          // For now, we'll use the cached profile or mock data
-          const freshProfile = cachedProfile || mockUserProfile;
-          
-          setProfile(freshProfile);
-          setIsOfflineData(false);
-          await offlineStorage.saveUserProfile(freshProfile);
-          console.log('🌐 Updated user profile from server');
+          if (firebaseProfile) {
+            setProfile(firebaseProfile);
+            setIsOfflineData(false);
+            await offlineStorage.saveUserProfile(firebaseProfile);
+            console.log('🌐 Updated user profile from Firebase');
+          } else {
+            // Create default profile if none exists
+            const defaultProfile = getDefaultProfile(user);
+            await createUserDocument(user.uid || user.id, defaultProfile);
+            setProfile(defaultProfile);
+            setIsOfflineData(false);
+            await offlineStorage.saveUserProfile(defaultProfile);
+            console.log('🌐 Created new user profile in Firebase');
+          }
         } catch (error) {
-          console.log('⚠️ Failed to fetch fresh profile data, using cached version');
+          console.log('⚠️ Failed to fetch profile from Firebase, using cached version:', error);
+          
+          // If no cached profile and Firebase fails, create default
+          if (!cachedProfile) {
+            const defaultProfile = getDefaultProfile(user);
+            setProfile(defaultProfile);
+            await offlineStorage.saveUserProfile(defaultProfile);
+            console.log('📱 Initialized with default profile');
+          }
         }
+      } else if (!cachedProfile) {
+        // Offline and no cache - create default profile
+        const defaultProfile = getDefaultProfile(user);
+        setProfile(defaultProfile);
+        await offlineStorage.saveUserProfile(defaultProfile);
+        setIsOfflineData(true);
+        console.log('📱 Initialized with default profile (offline)');
       }
     } catch (error) {
       console.error('❌ Error loading user profile:', error);
-      // Fallback to mock data if everything fails
-      setProfile(mockUserProfile);
+      // Fallback to default profile if everything fails
+      const defaultProfile = getDefaultProfile(user);
+      setProfile(defaultProfile);
     } finally {
       setLoading(false);
     }
-  }, [isConnected]);
+  }, [user, isConnected]);
 
   // Initialize data loading
   useEffect(() => {
@@ -98,10 +116,12 @@ export const useUserProfile = () => {
 
   // Update user profile
   const updateProfile = useCallback(async (updates) => {
+    if (!user || !profile) return null;
+
     const updatedProfile = {
       ...profile,
       ...updates,
-      lastModified: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       isOffline: !isConnected
     };
     
@@ -115,37 +135,41 @@ export const useUserProfile = () => {
     if (!isConnected) {
       await offlineStorage.addToOfflineQueue({
         type: 'UPDATE_PROFILE',
-        data: updates
+        data: updates,
+        userId: user.uid || user.id
       });
       console.log('📱 Profile update queued for sync');
     } else {
-      // If online, simulate API call
+      // If online, update Firebase
       try {
-        console.log('🌐 Updating profile on server...');
-        await new Promise(resolve => setTimeout(resolve, 400));
-        console.log('✅ Profile updated on server');
+        console.log('🌐 Updating profile in Firebase...');
+        await createUserDocument(user.uid || user.id, updatedProfile);
+        console.log('✅ Profile updated in Firebase');
       } catch (error) {
-        console.error('❌ Failed to update profile on server:', error);
+        console.error('❌ Failed to update profile in Firebase:', error);
         // Queue for retry
         await offlineStorage.addToOfflineQueue({
           type: 'UPDATE_PROFILE',
-          data: updates
+          data: updates,
+          userId: user.uid || user.id
         });
       }
     }
     
     return updatedProfile;
-  }, [profile, isConnected]);
+  }, [user, profile, isConnected]);
 
   // Update preferences
   const updatePreferences = useCallback(async (newPreferences) => {
+    if (!user || !profile) return null;
+
     const updatedProfile = {
       ...profile,
       preferences: {
         ...profile.preferences,
         ...newPreferences
       },
-      lastModified: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       isOffline: !isConnected
     };
     
@@ -155,22 +179,32 @@ export const useUserProfile = () => {
     if (!isConnected) {
       await offlineStorage.addToOfflineQueue({
         type: 'UPDATE_PREFERENCES',
-        data: newPreferences
+        data: newPreferences,
+        userId: user.uid || user.id
       });
       console.log('📱 Preferences update queued for sync');
     } else {
       try {
-        console.log('🌐 Updating preferences on server...');
-        await new Promise(resolve => setTimeout(resolve, 300));
-        console.log('✅ Preferences updated on server');
+        console.log('🌐 Updating preferences in Firebase...');
+        await createUserDocument(user.uid || user.id, updatedProfile);
+        console.log('✅ Preferences updated in Firebase');
       } catch (error) {
-        console.error('❌ Failed to update preferences on server:', error);
+        console.error('❌ Failed to update preferences in Firebase:', error);
+        await offlineStorage.addToOfflineQueue({
+          type: 'UPDATE_PREFERENCES',
+          data: newPreferences,
+          userId: user.uid || user.id
+        });
       }
     }
-  }, [profile, isConnected]);
+    
+    return updatedProfile;
+  }, [user, profile, isConnected]);
 
   // Add payment method
   const addPaymentMethod = useCallback(async (paymentMethod) => {
+    if (!user || !profile) return null;
+
     const newPaymentMethod = {
       id: `pm_${Date.now()}`,
       ...paymentMethod,
@@ -179,8 +213,8 @@ export const useUserProfile = () => {
     
     const updatedProfile = {
       ...profile,
-      paymentMethods: [...profile.paymentMethods, newPaymentMethod],
-      lastModified: new Date().toISOString(),
+      paymentMethods: [...(profile.paymentMethods || []), newPaymentMethod],
+      updatedAt: new Date().toISOString(),
       isOffline: !isConnected
     };
     
@@ -190,28 +224,36 @@ export const useUserProfile = () => {
     if (!isConnected) {
       await offlineStorage.addToOfflineQueue({
         type: 'ADD_PAYMENT_METHOD',
-        data: newPaymentMethod
+        data: newPaymentMethod,
+        userId: user.uid || user.id
       });
       console.log('📱 Payment method addition queued for sync');
     } else {
       try {
-        console.log('🌐 Adding payment method on server...');
-        await new Promise(resolve => setTimeout(resolve, 400));
-        console.log('✅ Payment method added on server');
+        console.log('🌐 Adding payment method in Firebase...');
+        await createUserDocument(user.uid || user.id, updatedProfile);
+        console.log('✅ Payment method added in Firebase');
       } catch (error) {
-        console.error('❌ Failed to add payment method on server:', error);
+        console.error('❌ Failed to add payment method in Firebase:', error);
+        await offlineStorage.addToOfflineQueue({
+          type: 'ADD_PAYMENT_METHOD',
+          data: newPaymentMethod,
+          userId: user.uid || user.id
+        });
       }
     }
     
     return newPaymentMethod;
-  }, [profile, isConnected]);
+  }, [user, profile, isConnected]);
 
   // Remove payment method
   const removePaymentMethod = useCallback(async (paymentMethodId) => {
+    if (!user || !profile) return null;
+
     const updatedProfile = {
       ...profile,
-      paymentMethods: profile.paymentMethods.filter(pm => pm.id !== paymentMethodId),
-      lastModified: new Date().toISOString(),
+      paymentMethods: (profile.paymentMethods || []).filter(pm => pm.id !== paymentMethodId),
+      updatedAt: new Date().toISOString(),
       isOffline: !isConnected
     };
     
@@ -221,19 +263,27 @@ export const useUserProfile = () => {
     if (!isConnected) {
       await offlineStorage.addToOfflineQueue({
         type: 'REMOVE_PAYMENT_METHOD',
-        data: { paymentMethodId }
+        data: { paymentMethodId },
+        userId: user.uid || user.id
       });
       console.log('📱 Payment method removal queued for sync');
     } else {
       try {
-        console.log('🌐 Removing payment method from server...');
-        await new Promise(resolve => setTimeout(resolve, 300));
-        console.log('✅ Payment method removed from server');
+        console.log('🌐 Removing payment method from Firebase...');
+        await createUserDocument(user.uid || user.id, updatedProfile);
+        console.log('✅ Payment method removed from Firebase');
       } catch (error) {
-        console.error('❌ Failed to remove payment method from server:', error);
+        console.error('❌ Failed to remove payment method from Firebase:', error);
+        await offlineStorage.addToOfflineQueue({
+          type: 'REMOVE_PAYMENT_METHOD',
+          data: { paymentMethodId },
+          userId: user.uid || user.id
+        });
       }
     }
-  }, [profile, isConnected]);
+    
+    return updatedProfile;
+  }, [user, profile, isConnected]);
 
   return {
     profile,

@@ -13,81 +13,80 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { useAuth } from '../contexts/AuthContext';
+import { usePassengerAuth } from '../hooks/usePassengerAuth';
 
 const PassengerAuthScreen = ({ navigation, route }) => {
-  const { signInWithEmail, signUpWithEmail } = useAuth();
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const {
+    formData,
+    updateField,
+    isSignUp,
+    toggleAuthMode,
+    loading,
+    errors,
+    hasErrors,
+    focusedField,
+    handleFocus,
+    handleBlur,
+    showPassword,
+    togglePasswordVisibility,
+    handleAuth,
+    isFormValid,
+  } = usePassengerAuth();
+
   const [error, setError] = useState('');
-  const [focusedInput, setFocusedInput] = useState(null);
 
-  const handleAuth = async () => {
-    if (!email || !password) {
-      setError('Veuillez remplir tous les champs');
-      return;
+  // Force sign up mode if route params indicate it
+  React.useEffect(() => {
+    if (route.params?.forceSignUp && !isSignUp) {
+      toggleAuthMode();
     }
+  }, [route.params?.forceSignUp]);
 
-    if (isSignUp && !fullName) {
-      setError('Veuillez entrer votre nom complet');
-      return;
+  const onAuthSuccess = async () => {
+    const result = await handleAuth();
+    if (result.success) {
+      navigation.navigate('Search');
+    } else if (result.error) {
+      setError(result.error);
     }
+    // If result.error is null, don't set any error since we have field-specific errors
+  };
 
-    if (isSignUp && !phoneNumber) {
-      setError('Veuillez entrer votre numéro de téléphone');
-      return;
-    }
+  const handleBackPress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    navigation.goBack();
+  };
 
-    if (isSignUp && password !== confirmPassword) {
-      setError('Les mots de passe ne correspondent pas');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-    
-    try {
+  const handleTabPress = (newIsSignUp) => {
+    if (newIsSignUp !== isSignUp) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      
-      if (isSignUp) {
-        console.log('🔐 Tentative d\'inscription passager...');
-        const { data, error } = await signUpWithEmail(email, password, { 
-          fullName, 
-          phoneNumber,
-          userType: 'passenger' 
-        });
-        if (error) {
-          console.log('❌ Erreur inscription:', error.message);
-          setError(`Erreur d'inscription: ${error.message}`);
-        } else {
-          console.log('✅ Inscription passager réussie');
-          // Navigate to Search screen after successful signup
-          navigation.navigate('Search');
-        }
-      } else {
-        console.log('🔐 Tentative de connexion passager...');
-        const { data, error } = await signInWithEmail(email, password);
-        if (error) {
-          console.log('❌ Erreur connexion:', error.message);
-          setError(`Erreur de connexion: ${error.message}`);
-        } else {
-          console.log('✅ Connexion passager réussie');
-          // Navigate to Search screen after successful signin
-          navigation.navigate('Search');
-        }
-      }
-    } catch (error) {
-      console.log('❌ Erreur générale:', error);
-      setError(`Une erreur est survenue: ${error.message || 'Erreur inconnue'}`);
-    } finally {
-      setLoading(false);
+      toggleAuthMode();
     }
+  };
+
+  const handlePasswordToggle = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    togglePasswordVisibility();
+  };
+
+  const handleInputFocus = (inputName) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    handleFocus(inputName);
+  };
+
+  const handleInputBlur = () => {
+    handleBlur();
+  };
+
+  // Get friendly error message for confirm password
+  const getConfirmPasswordError = () => {
+    if (errors.confirmPassword) {
+      if (errors.confirmPassword === 'Les mots de passe ne correspondent pas') {
+        return 'Oups ! Vos mots de passe ne sont pas identiques. Vérifiez-les s\'il vous plaît 😊';
+      }
+      return errors.confirmPassword;
+    }
+    return null;
   };
 
   return (
@@ -96,18 +95,18 @@ const PassengerAuthScreen = ({ navigation, route }) => {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          onPress={handleBackPress}
         >
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         
         <Text style={styles.title}>
-          {isSignUp ? 'Inscription' : 'Connexion'}
+          {isSignUp ? 'Bienvenue à Zeurk' : 'Ravie de vous revoir'}
         </Text>
         <Text style={styles.subtitle}>
           {isSignUp
-            ? 'Créez votre compte pour voyager'
-            : 'Connectez-vous pour réserver vos courses'}
+            ? 'Inscription'
+            : 'Se connecter à Zeurk'}
         </Text>
       </View>
 
@@ -125,7 +124,7 @@ const PassengerAuthScreen = ({ navigation, route }) => {
             <View style={styles.tabContainer}>
               <TouchableOpacity
                 style={[styles.tab, !isSignUp && styles.activeTab]}
-                onPress={() => setIsSignUp(false)}
+                onPress={() => handleTabPress(false)}
               >
                 <Text style={[styles.tabText, !isSignUp && styles.activeTabText]}>
                   Se connecter
@@ -133,7 +132,7 @@ const PassengerAuthScreen = ({ navigation, route }) => {
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.tab, isSignUp && styles.activeTab]}
-                onPress={() => setIsSignUp(true)}
+                onPress={() => handleTabPress(true)}
               >
                 <Text style={[styles.tabText, isSignUp && styles.activeTabText]}>
                   S'inscrire
@@ -146,111 +145,153 @@ const PassengerAuthScreen = ({ navigation, route }) => {
               {isSignUp && (
                 <View style={styles.inputContainer}>
                   <Text style={styles.label}>Nom complet</Text>
-                  <View style={[styles.inputWrapper, focusedInput === 'fullName' && styles.inputWrapperFocused]}>
+                  <View style={[styles.inputWrapper, focusedField === 'fullName' && styles.inputWrapperFocused]}>
                     <Ionicons name="person-outline" size={20} color="rgba(255, 255, 255, 0.6)" />
                     <TextInput
                       style={styles.input}
-                      placeholder="Entrez votre nom complet"
+                      placeholder="Mobutu Seseseko"
                       placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                      value={fullName}
-                      onChangeText={setFullName}
+                      value={formData.fullName}
+                      onChangeText={(value) => updateField('fullName', value)}
                       autoCapitalize="words"
-                      onFocus={() => setFocusedInput('fullName')}
-                      onBlur={() => setFocusedInput(null)}
+                      onFocus={() => handleInputFocus('fullName')}
+                      onBlur={handleInputBlur}
                     />
                   </View>
+                  {errors.fullName && (
+                    <Text style={styles.errorText}>{errors.fullName}</Text>
+                  )}
+                </View>
+              )}
+
+              {isSignUp && (
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Email</Text>
+                  <View style={[styles.inputWrapper, focusedField === 'email' && styles.inputWrapperFocused]}>
+                    <Ionicons name="mail-outline" size={20} color="rgba(255, 255, 255, 0.6)" />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="mobutu@gmail.com"
+                      placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                      value={formData.email}
+                      onChangeText={(value) => updateField('email', value)}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      onFocus={() => handleInputFocus('email')}
+                      onBlur={handleInputBlur}
+                    />
+                  </View>
+                  {errors.email && (
+                    <Text style={styles.errorText}>{errors.email}</Text>
+                  )}
                 </View>
               )}
 
               {isSignUp && (
                 <View style={styles.inputContainer}>
                   <Text style={styles.label}>Numéro de téléphone</Text>
-                  <View style={[styles.inputWrapper, focusedInput === 'phoneNumber' && styles.inputWrapperFocused]}>
+                  <View style={[styles.inputWrapper, focusedField === 'phoneNumber' && styles.inputWrapperFocused]}>
                     <Ionicons name="call-outline" size={20} color="rgba(255, 255, 255, 0.6)" />
                     <TextInput
                       style={styles.input}
-                      placeholder="+243 XXX XXX XXX"
+                      placeholder="+243000000000"
                       placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                      value={phoneNumber}
-                      onChangeText={setPhoneNumber}
+                      value={formData.phoneNumber}
+                      onChangeText={(value) => updateField('phoneNumber', value)}
                       keyboardType="phone-pad"
-                      onFocus={() => setFocusedInput('phoneNumber')}
-                      onBlur={() => setFocusedInput(null)}
+                      onFocus={() => handleInputFocus('phoneNumber')}
+                      onBlur={handleInputBlur}
                     />
                   </View>
+                  {errors.phoneNumber && (
+                    <Text style={styles.errorText}>{errors.phoneNumber}</Text>
+                  )}
                 </View>
               )}
 
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Email</Text>
-                <View style={[styles.inputWrapper, focusedInput === 'email' && styles.inputWrapperFocused]}>
-                  <Ionicons name="mail-outline" size={20} color="rgba(255, 255, 255, 0.6)" />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Entrez votre email"
-                    placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                    value={email}
-                    onChangeText={setEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    onFocus={() => setFocusedInput('email')}
-                    onBlur={() => setFocusedInput(null)}
-                  />
-                </View>
-              </View>
-
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Mot de passe</Text>
-                <View style={[styles.inputWrapper, focusedInput === 'password' && styles.inputWrapperFocused]}>
-                  <Ionicons name="lock-closed-outline" size={20} color="rgba(255, 255, 255, 0.6)" />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Entrez votre mot de passe"
-                    placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry={!showPassword}
-                    onFocus={() => setFocusedInput('password')}
-                    onBlur={() => setFocusedInput(null)}
-                  />
-                  <TouchableOpacity
-                    onPress={() => setShowPassword(!showPassword)}
-                    style={styles.eyeIcon}
-                  >
-                    <Ionicons
-                      name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                      size={20}
-                      color="rgba(255, 255, 255, 0.6)"
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              {isSignUp && (
+              {!isSignUp && (
                 <View style={styles.inputContainer}>
-                  <Text style={styles.label}>Confirmer le mot de passe</Text>
-                  <View style={[styles.inputWrapper, focusedInput === 'confirmPassword' && styles.inputWrapperFocused]}>
+                  <Text style={styles.label}>Email</Text>
+                  <View style={[styles.inputWrapper, focusedField === 'email' && styles.inputWrapperFocused]}>
+                    <Ionicons name="mail-outline" size={20} color="rgba(255, 255, 255, 0.6)" />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="mobutu@gmail.com"
+                      placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                      value={formData.email}
+                      onChangeText={(value) => updateField('email', value)}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      onFocus={() => handleInputFocus('email')}
+                      onBlur={handleInputBlur}
+                    />
+                  </View>
+                  {errors.email && (
+                    <Text style={styles.errorText}>{errors.email}</Text>
+                  )}
+                </View>
+              )}
+
+              <View style={styles.inputRow}>
+                <View style={[styles.inputContainer, styles.inputContainerLeft]}>
+                  <Text style={styles.label}>Mot de passe</Text>
+                  <View style={[styles.inputWrapper, focusedField === 'password' && styles.inputWrapperFocused]}>
                     <Ionicons name="lock-closed-outline" size={20} color="rgba(255, 255, 255, 0.6)" />
                     <TextInput
                       style={styles.input}
-                      placeholder="Confirmez votre mot de passe"
+                      placeholder="*******"
                       placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                      value={confirmPassword}
-                      onChangeText={setConfirmPassword}
+                      value={formData.password}
+                      onChangeText={(value) => updateField('password', value)}
                       secureTextEntry={!showPassword}
-                      onFocus={() => setFocusedInput('confirmPassword')}
-                      onBlur={() => setFocusedInput(null)}
+                      onFocus={() => handleInputFocus('password')}
+                      onBlur={handleInputBlur}
                     />
+                    <TouchableOpacity
+                      onPress={handlePasswordToggle}
+                      style={styles.eyeIcon}
+                    >
+                      <Ionicons
+                        name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                        size={20}
+                        color="rgba(255, 255, 255, 0.6)"
+                      />
+                    </TouchableOpacity>
                   </View>
+                  {errors.password && (
+                    <Text style={styles.errorText}>{errors.password}</Text>
+                  )}
                 </View>
-              )}
+
+                {isSignUp && (
+                  <View style={[styles.inputContainer, styles.inputContainerRight]}>
+                    <Text style={styles.label}>Repetez</Text>
+                    <View style={[styles.inputWrapper, focusedField === 'confirmPassword' && styles.inputWrapperFocused]}>
+                      <Ionicons name="lock-closed-outline" size={20} color="rgba(255, 255, 255, 0.6)" />
+                      <TextInput
+                        style={styles.input}
+                        placeholder="*******"
+                        placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                        value={formData.confirmPassword}
+                        onChangeText={(value) => updateField('confirmPassword', value)}
+                        secureTextEntry={!showPassword}
+                        onFocus={() => handleInputFocus('confirmPassword')}
+                        onBlur={handleInputBlur}
+                      />
+                    </View>
+                    {getConfirmPasswordError() && (
+                      <Text style={styles.errorText}>{getConfirmPasswordError()}</Text>
+                    )}
+                  </View>
+                )}
+              </View>
 
               {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
               {/* Auth Button */}
               <TouchableOpacity
                 style={[styles.submitButton, loading && styles.submitButtonDisabled]}
-                onPress={handleAuth}
+                onPress={onAuthSuccess}
                 disabled={loading}
               >
                 {loading ? (
@@ -276,8 +317,8 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    paddingTop: 90,
-    paddingBottom: 40,
+    paddingTop: 60,
+    paddingBottom: 30,
     backgroundColor: '#000',
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
@@ -286,7 +327,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    top: 50,
+    top: 60,
     left: 20,
     borderRadius: 20,
     padding: 8,
@@ -301,7 +342,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'rgba(255, 255, 255, 0.7)',
     textAlign: 'center',
-    paddingHorizontal: 20,
   },
   content: {
     flex: 1,
@@ -340,6 +380,23 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     marginBottom: 20,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  inputContainerLeft: {
+    flex: 1,
+    marginRight: 10,
+    minWidth: 0,
+    maxWidth: '50%',
+  },
+  inputContainerRight: {
+    flex: 1,
+    marginLeft: 10,
+    minWidth: 0,
+    maxWidth: '50%',
   },
   label: {
     color: '#fff',
@@ -395,8 +452,7 @@ const styles = StyleSheet.create({
     color: '#ff6b6b',
     fontSize: 14,
     marginTop: 5,
-    marginBottom: 15,
-    textAlign: 'center',
+    textAlign: 'left',
   },
 });
 

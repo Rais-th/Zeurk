@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNetworkStatus } from './useNetworkStatus';
+import { useNetworkStatus } from '../utils/networkManager';
 import { mockVehiclesForSale } from '../config/vehicleMarketplace';
 
 export const useVehicles = () => {

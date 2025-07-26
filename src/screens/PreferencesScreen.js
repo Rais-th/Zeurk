@@ -12,8 +12,15 @@ import {
   Animated,
   LayoutAnimation,
   UIManager,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../contexts/AuthContext';
+import { doc, deleteDoc } from 'firebase/firestore';
+import { deleteUser } from 'firebase/auth';
+import { firestore, deleteImageFromStorage } from '../config/firebase';
+import * as Haptics from 'expo-haptics';
 
 // Enable LayoutAnimation for Android
 if (Platform.OS === 'android') {
@@ -38,14 +45,17 @@ const DEMO_ADDRESSES = [
 ];
 
 const PreferencesScreen = ({ navigation }) => {
+  const { user } = useAuth();
   const [preferredClass, setPreferredClass] = useState('Standard');
   const [preferredLanguage, setPreferredLanguage] = useState('Français');
   const [selectedPayment, setSelectedPayment] = useState('1');
+  const [loading, setLoading] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     payments: true,
     addresses: false,
     class: false,
     language: false,
+    deleteAccount: false,
   });
 
   const toggleSection = (section) => {
@@ -111,6 +121,98 @@ const PreferencesScreen = ({ navigation }) => {
       },
     });
     setPreferredLanguage(language);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user) {
+      Alert.alert('Erreur', 'Utilisateur non connecté');
+      return;
+    }
+
+    Alert.alert(
+      'Supprimer le compte',
+      'Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible et supprimera définitivement toutes vos données.',
+      [
+        {
+          text: 'Annuler',
+          style: 'cancel',
+        },
+        {
+          text: 'Supprimer définitivement',
+          style: 'destructive',
+          onPress: async () => {
+            // Deuxième confirmation
+            Alert.alert(
+              'Confirmation finale',
+              'Cette action supprimera définitivement votre compte et toutes vos données. Êtes-vous absolument sûr ?',
+              [
+                {
+                  text: 'Annuler',
+                  style: 'cancel',
+                },
+                {
+                  text: 'OUI, SUPPRIMER',
+                  style: 'destructive',
+                  onPress: async () => {
+                    setLoading(true);
+                    try {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+                      
+                      // Supprimer l'avatar de Firebase Storage s'il existe
+                      if (user.photoURL && user.photoURL.includes('firebase')) {
+                        try {
+                          const oldFileName = user.photoURL.split('/').pop();
+                          if (oldFileName) {
+                            await deleteImageFromStorage(`avatars/${user.uid}/${oldFileName}`);
+                          }
+                        } catch (error) {
+                          console.log('Impossible de supprimer l\'avatar:', error);
+                        }
+                      }
+
+                      // Supprimer le document utilisateur de Firestore
+                      const userRef = doc(firestore, 'passengers', user.uid);
+                      await deleteDoc(userRef);
+
+                      // Supprimer le compte utilisateur de Firebase Auth
+                      await deleteUser(user);
+
+                      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                      Alert.alert(
+                        'Compte supprimé',
+                        'Votre compte a été supprimé avec succès.',
+                        [
+                          {
+                            text: 'OK',
+                            onPress: () => {
+                              // Rediriger vers l'écran de connexion
+                              navigation.reset({
+                                index: 0,
+                                routes: [{ name: 'PassengerAuth' }],
+                              });
+                            },
+                          },
+                        ]
+                      );
+                    } catch (error) {
+                      console.error('Erreur lors de la suppression du compte:', error);
+                      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                      Alert.alert(
+                        'Erreur',
+                        'Impossible de supprimer le compte. Veuillez réessayer ou contacter le support.',
+                        [{ text: 'OK' }]
+                      );
+                    } finally {
+                      setLoading(false);
+                    }
+                  },
+                },
+              ]
+            );
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -381,6 +483,29 @@ const PreferencesScreen = ({ navigation }) => {
             </TouchableOpacity>
           </View>
         </Section>
+
+        {/* Section Suppression de compte */}
+        <Section title="Suppression de compte" name="deleteAccount">
+          <View style={styles.deleteAccountContainer}>
+            <Text style={styles.deleteAccountWarning}>
+              ⚠️ Cette action est irréversible et supprimera définitivement toutes vos données
+            </Text>
+            <TouchableOpacity
+              style={[styles.deleteAccountButton, loading && styles.deleteAccountButtonDisabled]}
+              onPress={handleDeleteAccount}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator size="small" color="#FF6B6B" />
+              ) : (
+                <>
+                  <Ionicons name="trash-outline" size={20} color="#FF6B6B" />
+                  <Text style={styles.deleteAccountText}>Supprimer mon compte</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        </Section>
       </ScrollView>
     </View>
   );
@@ -595,6 +720,37 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     opacity: 0.6,
+  },
+  deleteAccountContainer: {
+    marginTop: 12,
+    paddingHorizontal: 16,
+  },
+  deleteAccountWarning: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.6)',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  deleteAccountButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FF6B6B',
+    borderStyle: 'dashed',
+  },
+  deleteAccountButtonDisabled: {
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderStyle: 'solid',
+  },
+  deleteAccountText: {
+    color: '#FF6B6B',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 10,
   },
 });
 

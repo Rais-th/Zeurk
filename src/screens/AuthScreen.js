@@ -27,6 +27,13 @@ const AuthScreen = ({ navigation, route }) => {
   const [error, setError] = useState('');
   const [focusedInput, setFocusedInput] = useState(null);
 
+  // Force sign up mode if route params indicate it
+  React.useEffect(() => {
+    if (route.params?.forceSignUp && !isSignUp) {
+      setIsSignUp(true);
+    }
+  }, [route.params?.forceSignUp]);
+
   const handleAuth = async () => {
     if (!email || !password) {
       setError('Veuillez remplir tous les champs');
@@ -51,7 +58,10 @@ const AuthScreen = ({ navigation, route }) => {
       
       if (isSignUp) {
         console.log('🔐 Tentative d\'inscription...');
-        const { data, error } = await signUpWithEmail(email, password, { fullName });
+        const { data, error } = await signUpWithEmail(email, password, { 
+          fullName,
+          userType: 'driver' // Spécifier que c'est un driver
+        });
         if (error) {
           console.log('❌ Erreur inscription:', error.message);
           setError(`Erreur d'inscription: ${error.message}`);
@@ -170,51 +180,53 @@ const AuthScreen = ({ navigation, route }) => {
                 </View>
               </View>
 
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Mot de passe</Text>
-                <View style={[styles.inputWrapper, focusedInput === 'password' && styles.inputWrapperFocused]}>
-                  <Ionicons name="lock-closed-outline" size={20} color="rgba(255, 255, 255, 0.6)" />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Entrez votre mot de passe"
-                    placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry={!showPassword}
-                    onFocus={() => setFocusedInput('password')}
-                    onBlur={() => setFocusedInput(null)}
-                  />
-                  <TouchableOpacity
-                    onPress={() => setShowPassword(!showPassword)}
-                    style={styles.eyeIcon}
-                  >
-                    <Ionicons
-                      name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                      size={20}
-                      color="rgba(255, 255, 255, 0.6)"
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              {isSignUp && (
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>Confirmer le mot de passe</Text>
-                  <View style={[styles.inputWrapper, focusedInput === 'confirmPassword' && styles.inputWrapperFocused]}>
+              <View style={styles.inputRow}>
+                <View style={[styles.inputContainer, styles.inputContainerLeft]}>
+                  <Text style={styles.label}>Mot de passe</Text>
+                  <View style={[styles.inputWrapper, focusedInput === 'password' && styles.inputWrapperFocused]}>
                     <Ionicons name="lock-closed-outline" size={20} color="rgba(255, 255, 255, 0.6)" />
                     <TextInput
                       style={styles.input}
-                      placeholder="Confirmez votre mot de passe"
+                      placeholder="*******"
                       placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                      value={confirmPassword}
-                      onChangeText={setConfirmPassword}
+                      value={password}
+                      onChangeText={setPassword}
                       secureTextEntry={!showPassword}
-                      onFocus={() => setFocusedInput('confirmPassword')}
+                      onFocus={() => setFocusedInput('password')}
                       onBlur={() => setFocusedInput(null)}
                     />
+                    <TouchableOpacity
+                      onPress={() => setShowPassword(!showPassword)}
+                      style={styles.eyeIcon}
+                    >
+                      <Ionicons
+                        name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                        size={20}
+                        color="rgba(255, 255, 255, 0.6)"
+                      />
+                    </TouchableOpacity>
                   </View>
                 </View>
-              )}
+
+                {isSignUp && (
+                  <View style={[styles.inputContainer, styles.inputContainerRight]}>
+                    <Text style={styles.label}>Repetez</Text>
+                    <View style={[styles.inputWrapper, focusedInput === 'confirmPassword' && styles.inputWrapperFocused]}>
+                      <Ionicons name="lock-closed-outline" size={20} color="rgba(255, 255, 255, 0.6)" />
+                      <TextInput
+                        style={styles.input}
+                        placeholder="*******"
+                        placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                        value={confirmPassword}
+                        onChangeText={setConfirmPassword}
+                        secureTextEntry={!showPassword}
+                        onFocus={() => setFocusedInput('confirmPassword')}
+                        onBlur={() => setFocusedInput(null)}
+                      />
+                    </View>
+                  </View>
+                )}
+              </View>
 
               {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
@@ -249,8 +261,8 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    paddingTop: 90,
-    paddingBottom: 40,
+    paddingTop: 60,
+    paddingBottom: 30,
     backgroundColor: '#000',
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
@@ -259,7 +271,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    top: 50,
+    top: 60,
     left: 20,
     borderRadius: 20,
     padding: 8,
@@ -312,6 +324,23 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     marginBottom: 20,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  inputContainerLeft: {
+    flex: 1,
+    marginRight: 10,
+    minWidth: 0,
+    maxWidth: '50%',
+  },
+  inputContainerRight: {
+    flex: 1,
+    marginLeft: 10,
+    minWidth: 0,
+    maxWidth: '50%',
   },
   label: {
     color: '#fff',

@@ -40,7 +40,7 @@ import InfoChatScreen from './src/screens/InfoChatScreen';
 import SearchScreen from './src/screens/SearchScreen';
 import ScheduleRideScreen from './src/screens/ScheduleRideScreen';
 import SMSRideRequestScreen from './src/screens/SMSRideRequestScreen';
-import DriverDashboard from './src/screens/DriverDashboard';
+import DriverDashboard from './src/screens/DriverDashboard/DriverDashboard';
 import HomeScreen from './src/screens/HomeScreen';
 
 const Stack = createNativeStackNavigator();

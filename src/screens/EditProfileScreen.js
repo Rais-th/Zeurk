@@ -16,7 +16,8 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../config/supabase';
+import { firestore, storage, COLLECTIONS, createUserDocument, getUserDocument, uploadImageToStorage, deleteImageFromStorage } from '../config/firebase';
+import * as Haptics from 'expo-haptics';
 
 const STATUSBAR_HEIGHT = StatusBar.currentHeight || (Platform.OS === 'ios' ? 44 : 0);
 
@@ -34,7 +35,7 @@ const EditProfileScreen = ({ navigation }) => {
   });
   const [profile, setProfile] = useState(initialProfile);
 
-  // Charger le profil utilisateur depuis Supabase
+  // Charger le profil utilisateur depuis Firebase
   useEffect(() => {
     loadUserProfile();
   }, [user]);
@@ -44,33 +45,23 @@ const EditProfileScreen = ({ navigation }) => {
     
     setInitialLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('passengers')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+      const userData = await getUserDocument(user.id);
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
-        console.error('Erreur lors du chargement du profil:', error);
-        Alert.alert('Erreur', 'Impossible de charger votre profil');
-        return;
-      }
-
-      if (data) {
+      if (userData) {
         const profileData = {
-          full_name: data.full_name || '',
-          phone: data.phone || '',
-          avatar_url: data.avatar_url || null,
-          emergency_contact: data.emergency_contact || '',
-          date_of_birth: data.date_of_birth || null
+          full_name: userData.fullName || userData.full_name || '',
+          phone: userData.phoneNumber || userData.phone || '',
+          avatar_url: userData.avatar_url || null,
+          emergency_contact: userData.emergency_contact || '',
+          date_of_birth: userData.date_of_birth || null
         };
         setProfile(profileData);
         setInitialProfile(profileData);
       } else {
         // Créer un nouveau profil si aucun n'existe
         const newProfile = {
-          full_name: user.user_metadata?.full_name || '',
-          phone: '',
+          full_name: user.user_metadata?.fullName || '',
+          phone: user.user_metadata?.phoneNumber || '',
           avatar_url: null,
           emergency_contact: '',
           date_of_birth: null
@@ -86,12 +77,41 @@ const EditProfileScreen = ({ navigation }) => {
     }
   };
 
+  const toggleSection = (section) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
+  const Section = ({ title, name, children, isDanger = false }) => (
+    <View style={[styles.section, isDanger && styles.dangerSection]}>
+      <TouchableOpacity 
+        style={styles.sectionHeader} 
+        onPress={() => toggleSection(name)}
+      >
+        <Text style={[styles.sectionTitle, isDanger && styles.dangerSectionTitle]}>{title}</Text>
+        <Ionicons 
+          name={expandedSections[name] ? "chevron-up" : "chevron-down"} 
+          size={24} 
+          color={isDanger ? "#ff6b6b" : "#fff"} 
+        />
+      </TouchableOpacity>
+      {expandedSections[name] && (
+        <View style={styles.sectionContent}>
+          {children}
+        </View>
+      )}
+    </View>
+  );
+
   // Vérifier si des modifications ont été apportées
   const hasChanges = () => {
     return JSON.stringify(profile) !== JSON.stringify(initialProfile);
   };
 
-  // Fonction pour uploader une image vers Supabase Storage
+  // Fonction pour uploader une image vers Firebase Storage
   const uploadImage = async (imageUri) => {
     try {
       // Compresser l'image pour optimiser la taille
@@ -105,44 +125,23 @@ const EditProfileScreen = ({ navigation }) => {
       );
 
       // Créer un nom de fichier unique avec structure de dossier
-      const fileName = `${user.id}/avatar_${Date.now()}.jpg`;
+      const fileName = `avatars/${user.id}/avatar_${Date.now()}.jpg`;
       
-      // Convertir l'image en blob pour l'upload
-      const response = await fetch(manipulatedImage.uri);
-      const blob = await response.blob();
-
       // Supprimer l'ancien avatar s'il existe
-      if (initialProfile.avatar_url && initialProfile.avatar_url.includes('supabase')) {
+      if (initialProfile.avatar_url && initialProfile.avatar_url.includes('firebase')) {
         try {
           const oldFileName = initialProfile.avatar_url.split('/').pop();
           if (oldFileName) {
-            await supabase.storage
-              .from('avatars')
-              .remove([`${user.id}/${oldFileName}`]);
+            await deleteImageFromStorage(`avatars/${user.id}/${oldFileName}`);
           }
         } catch (error) {
           console.log('Impossible de supprimer l\'ancien avatar:', error);
         }
       }
 
-      // Upload vers Supabase Storage
-      const { data, error } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, blob, {
-          contentType: 'image/jpeg',
-          upsert: true
-        });
-
-      if (error) {
-        throw error;
-      }
-
-      // Obtenir l'URL publique
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(fileName);
-
-      return publicUrl;
+      // Upload vers Firebase Storage
+      const downloadURL = await uploadImageToStorage(manipulatedImage.uri, fileName);
+      return downloadURL;
     } catch (error) {
       console.error('Erreur lors de l\'upload de l\'image:', error);
       throw error;
@@ -150,43 +149,55 @@ const EditProfileScreen = ({ navigation }) => {
   };
 
   const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
-    if (status !== 'granted') {
-      Alert.alert('Permission refusée', 'Nous avons besoin de votre permission pour accéder à vos photos.');
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaType.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1.0,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      const imageUri = result.assets[0].uri;
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       
-      // Afficher immédiatement l'image sélectionnée
-      setProfile(prev => ({ ...prev, avatar_url: imageUri }));
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       
-      // Uploader l'image en arrière-plan
-      setImageUploading(true);
-      try {
-        const uploadedUrl = await uploadImage(imageUri);
-        // Mettre à jour avec l'URL uploadée
-        setProfile(prev => ({ ...prev, avatar_url: uploadedUrl }));
-      } catch (error) {
-        // En cas d'erreur, revenir à l'image précédente
-        setProfile(prev => ({ ...prev, avatar_url: initialProfile.avatar_url }));
-        Alert.alert(
-          'Erreur d\'upload', 
-          'Impossible d\'uploader l\'image. Veuillez réessayer.',
-          [{ text: 'OK' }]
-        );
-      } finally {
-        setImageUploading(false);
+      if (status !== 'granted') {
+        Alert.alert('Permission refusée', 'Nous avons besoin de votre permission pour accéder à vos photos.');
+        return;
       }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1.0,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const imageUri = result.assets[0].uri;
+        
+        // Afficher immédiatement l'image sélectionnée
+        setProfile(prev => ({ ...prev, avatar_url: imageUri }));
+        
+        // Uploader l'image en arrière-plan
+        setImageUploading(true);
+        try {
+          const uploadedUrl = await uploadImage(imageUri);
+          // Mettre à jour avec l'URL uploadée
+          setProfile(prev => ({ ...prev, avatar_url: uploadedUrl }));
+          
+          // Success feedback
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        } catch (error) {
+          // En cas d'erreur, revenir à l'image précédente
+          setProfile(prev => ({ ...prev, avatar_url: initialProfile.avatar_url }));
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          Alert.alert(
+            'Erreur d\'upload', 
+            'Impossible d\'uploader l\'image. Veuillez réessayer.',
+            [{ text: 'OK' }]
+          );
+        } finally {
+          setImageUploading(false);
+        }
+      }
+    } catch (error) {
+      console.error('❌ Erreur lors de la sélection d\'image:', error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert('Erreur', 'Impossible de sélectionner l\'image. Veuillez réessayer.');
     }
   };
 
@@ -200,42 +211,17 @@ const EditProfileScreen = ({ navigation }) => {
     try {
       // Préparer les données à sauvegarder
       const updateData = {
-        full_name: profile.full_name,
-        phone: profile.phone,
+        fullName: profile.full_name,
+        phoneNumber: profile.phone,
         avatar_url: profile.avatar_url,
         email: user.email,
         emergency_contact: profile.emergency_contact,
         date_of_birth: profile.date_of_birth,
-        updated_at: new Date().toISOString()
+        updatedAt: new Date().toISOString()
       };
 
-      // Vérifier si le profil existe déjà
-      const { data: existingProfile } = await supabase
-        .from('passengers')
-        .select('id')
-        .eq('id', user.id)
-        .single();
-
-      let result;
-      if (existingProfile) {
-        // Mettre à jour le profil existant
-        result = await supabase
-          .from('passengers')
-          .update(updateData)
-          .eq('id', user.id);
-      } else {
-        // Créer un nouveau profil
-        result = await supabase
-          .from('passengers')
-          .insert([{
-            id: user.id,
-            ...updateData
-          }]);
-      }
-
-      if (result.error) {
-        throw result.error;
-      }
+      // Créer ou mettre à jour le document utilisateur
+      await createUserDocument(user.id, updateData);
 
       Alert.alert('Succès', 'Profil mis à jour avec succès');
       setInitialProfile(profile); // Mettre à jour le profil initial après la sauvegarde

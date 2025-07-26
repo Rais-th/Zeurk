@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "734052770725",
+    "project_id": "zeurk-be41b",
+    "storage_bucket": "zeurk-be41b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:734052770725:android:6051f8b74889184e367e4c",
+        "android_client_info": {
+          "package_name": "com.Zeurk.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD7vdzQAxrFI8wbaUJ-MBqVpJ47hV1-YAs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+} 
