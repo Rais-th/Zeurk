@@ -119,8 +119,10 @@ async function sendPushNotificationToDrivers(rideRequest) {
           }
         },
         priority: 'high',
-        channelId: 'ride-requests',
-        badge: 1
+        channelId: 'zeurk-rides',
+        badge: 1,
+        icon: './assets/notification-icons/notification-icon-96.png',
+        color: '#FF9500'
       });
     }
 

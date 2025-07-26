@@ -28,8 +28,10 @@ class NotificationService {
           name: 'Courses Zeurk',
           importance: Notifications.AndroidImportance.MAX,
           vibrationPattern: [0, 250, 250, 250],
-          lightColor: '#FF6B35',
+          lightColor: '#FF9500',
           sound: 'default',
+          icon: './assets/notification-icons/notification-icon-96.png',
+          color: '#FF9500',
         });
       }
 
@@ -131,6 +133,8 @@ class NotificationService {
           body,
           data,
           sound: 'default',
+          icon: Platform.OS === 'android' ? './assets/notification-icons/notification-icon-96.png' : undefined,
+          color: '#FF9500',
         },
         trigger: null, // Immédiatement
       });

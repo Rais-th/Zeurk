@@ -34,6 +34,11 @@ export default {
         "googleMaps": {
           "apiKey": process.env.GOOGLE_MAPS_APIKEY
         }
+      },
+      "notification": {
+        "icon": "./assets/notification-icons/notification-icon-96.png",
+        "color": "#FF9500",
+        "androidCollapsedTitle": "Zeurk"
       }
     },
     "web": {
@@ -54,6 +59,13 @@ export default {
           "cameraPermission": "L'application accède à votre appareil photo pour vous permettre de prendre une photo de profil."
         }
       ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icons/notification-icon-96.png",
+          "color": "#FF9500"
+        }
+      ]
       // Firebase configuration removed for Expo Go compatibility
       // Use web SDK instead of React Native Firebase
     ]
