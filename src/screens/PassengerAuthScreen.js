@@ -45,7 +45,14 @@ const PassengerAuthScreen = ({ navigation, route }) => {
   const onAuthSuccess = async () => {
     const result = await handleAuth();
     if (result.success) {
-      navigation.navigate('Search');
+      // Navigate to WelcomePassenger only for new signups, directly to Search for login
+      if (isSignUp) {
+        navigation.navigate('WelcomePassenger', { 
+          userName: formData.fullName || 'Passager' 
+        });
+      } else {
+        navigation.navigate('Search');
+      }
     } else if (result.error) {
       setError(result.error);
     }

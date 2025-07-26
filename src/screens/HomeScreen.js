@@ -378,6 +378,7 @@ export default function HomeScreen({ navigation }) {
             
             // Check if user is authenticated before accessing search
             if (user) {
+              // Navigate directly to Search for already authenticated users
               navigation.navigate('Search');
             } else {
               // Show authentication screen for passenger access
@@ -418,6 +419,8 @@ export default function HomeScreen({ navigation }) {
             <Ionicons name="time" size={18} color="#fff" />
             <Text style={styles.quickButtonText}>Planifier</Text>
           </TouchableOpacity>
+
+
         </View>
       </View>
 

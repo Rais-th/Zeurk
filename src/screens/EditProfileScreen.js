@@ -128,10 +128,11 @@ const EditProfileScreen = ({ navigation }) => {
       const fileName = `avatars/${user.id}/avatar_${Date.now()}.jpg`;
       
       // Supprimer l'ancien avatar s'il existe
-      if (initialProfile.avatar_url && initialProfile.avatar_url.includes('firebase')) {
+      if (initialProfile.avatar_url && typeof initialProfile.avatar_url === 'string' && initialProfile.avatar_url.includes('firebase')) {
         try {
-          const oldFileName = initialProfile.avatar_url.split('/').pop();
-          if (oldFileName) {
+          const urlParts = initialProfile.avatar_url.split('/');
+          const oldFileName = urlParts[urlParts.length - 1];
+          if (oldFileName && oldFileName.trim() !== '') {
             await deleteImageFromStorage(`avatars/${user.id}/${oldFileName}`);
           }
         } catch (error) {

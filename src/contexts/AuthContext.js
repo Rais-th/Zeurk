@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth, createUserDocument, getUserDocument } from '../config/firebase';
-import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail } from 'firebase/auth';
+import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut as firebaseSignOut, sendPasswordResetEmail } from 'firebase/auth';
 
 const AuthContext = createContext({});
 
@@ -153,7 +153,7 @@ export const AuthProvider = ({ children }) => {
 
   const signOut = async () => {
     try {
-      await signOut(auth);
+      await firebaseSignOut(auth);
       console.log('✅ Firebase signout successful');
       return { error: null };
     } catch (error) {

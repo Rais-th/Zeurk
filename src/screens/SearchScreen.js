@@ -91,16 +91,89 @@ export default function SearchScreen({ navigation }) {
     return () => clearTimeout(timer);
   }, []);
 
-  const searchPlaces = async (text, isStart = true) => {
+  // Fonction pour préprocesser la requête avant l'envoi à Google Places API
+  const preprocessQuery = (query) => {
+    // Dictionnaire d'abréviations pour Google Places
+    const abbreviationMap = {
+      'av': 'avenue',
+      'ave': 'avenue',
+      'bd': 'boulevard',
+      'blvd': 'boulevard',
+      'r': 'rue',
+      'rd': 'rond',
+      'rp': 'rond-point',
+      'pl': 'place',
+      'ctr': 'centre',
+      'ctre': 'centre',
+      'univ': 'université',
+      'uni': 'université',
+      'hop': 'hôpital',
+      'hosp': 'hôpital',
+      'aero': 'aéroport',
+      'aéro': 'aéroport',
+      'march': 'marché',
+      'kin': 'kinshasa'
+    };
+
+    // Corrections orthographiques courantes
+    const spellCorrections = {
+      'kinchasa': 'kinshasa',
+      'kinchassa': 'kinshasa',
+      'kinsasa': 'kinshasa',
+      'ndjilli': 'ndjili',
+      'ndjily': 'ndjili',
+      'gombe': 'gombe',
+      'gomba': 'gombe',
+      'kalamu': 'kalamu',
+      'kalamo': 'kalamu',
+      'lingwala': 'lingwala',
+      'lingwalla': 'lingwala',
+      'barumbu': 'barumbu',
+      'barumbo': 'barumbu',
+      'universite': 'université',
+      'hopital': 'hôpital',
+      'marche': 'marché',
+      'aeroport': 'aéroport'
+    };
+
+    let processed = query.toLowerCase().trim();
+    
+    // Appliquer les corrections orthographiques
+    Object.keys(spellCorrections).forEach(incorrect => {
+      const regex = new RegExp(`\\b${incorrect}\\b`, 'gi');
+      processed = processed.replace(regex, spellCorrections[incorrect]);
+    });
+    
+    // Étendre les abréviations
+    const words = processed.split(/\s+/);
+    const expandedWords = words.map(word => {
+      const cleanWord = word.replace(/[.,;:!?]/g, '');
+      return abbreviationMap[cleanWord] || word;
+    });
+    
+    const expandedQuery = expandedWords.join(' ');
+    
+    // Ajouter "Kinshasa" si pas déjà présent pour améliorer la géolocalisation
+    if (!expandedQuery.includes('kinshasa') && !expandedQuery.includes('congo')) {
+      return `${expandedQuery} kinshasa`;
+    }
+    
+    return expandedQuery;
+  };
+
+  const searchPlaces = async (text, isStart = true, isStop = false) => {
     if (isStart && text === 'Position actuelle') {
       setStartSuggestions([]);
       setDestinationSuggestions([]);
+      setStopSuggestions([]);
       return;
     }
 
     if (text.length < 2) {
       if (isStart) {
         setStartSuggestions([]);
+      } else if (isStop) {
+        setStopSuggestions([]);
       } else {
         setDestinationSuggestions([]);
       }
@@ -108,12 +181,15 @@ export default function SearchScreen({ navigation }) {
     }
 
     try {
-      // Search landmarks first
-      const landmarkResults = searchLandmarks(text, 3);
+      // Search landmarks first (utilise déjà la recherche intelligente)
+      const landmarkResults = searchLandmarks(text, 1);
       
-      // Search Google Places
+      // Préprocesser la requête pour Google Places
+      const processedQuery = preprocessQuery(text);
+      
+      // Search Google Places avec la requête améliorée
       const response = await fetch(
-        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${text}&components=country:cd&location=-4.4419,15.2663&radius=50000&strictbounds=true&key=${GOOGLE_MAPS_APIKEY}&language=fr`
+        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(processedQuery)}&components=country:cd&location=-4.4419,15.2663&radius=50000&strictbounds=true&key=${GOOGLE_MAPS_APIKEY}&language=fr`
       );
       const data = await response.json();
       
@@ -131,18 +207,34 @@ export default function SearchScreen({ navigation }) {
         });
       }
       
+      // Filtrer les doublons entre landmarks et Google Places
+      const filteredGoogleSuggestions = googleSuggestions.filter(googlePlace => {
+        return !landmarkResults.some(landmark => {
+          const landmarkName = landmark.name.toLowerCase();
+          const googleName = googlePlace.description.toLowerCase();
+          return landmarkName.includes(googleName.split('•')[0].trim()) || 
+                 googleName.includes(landmarkName);
+        });
+      });
+      
       // Combine landmarks and Google suggestions
       const combinedSuggestions = [
         ...landmarkResults.map(landmark => ({ ...landmark, isLandmark: true })),
-        ...googleSuggestions
+        ...filteredGoogleSuggestions
       ].slice(0, 6);
       
       if (isStart) {
         setStartSuggestions(combinedSuggestions);
         setDestinationSuggestions([]);
+        setStopSuggestions([]);
+      } else if (isStop) {
+        setStopSuggestions(combinedSuggestions);
+        setStartSuggestions([]);
+        setDestinationSuggestions([]);
       } else {
         setDestinationSuggestions(combinedSuggestions);
         setStartSuggestions([]);
+        setStopSuggestions([]);
       }
     } catch (error) {
       console.error('Error fetching suggestions:', error);
@@ -171,7 +263,7 @@ export default function SearchScreen({ navigation }) {
     const newStops = [...stops];
     newStops[index] = text;
     setStops(newStops);
-    searchPlaces(text, false);
+    searchPlaces(text, false, true);
   };
 
   const handleSelectPlace = (place, isStart = true, stopIndex = -1) => {
@@ -203,20 +295,11 @@ export default function SearchScreen({ navigation }) {
       setStops(newStops);
       setStopSuggestions([]);
       
-      // Focus sur le prochain champ vide
-      const nextEmptyStopIndex = newStops.findIndex(stop => !stop);
-      if (nextEmptyStopIndex !== -1) {
-        // Focus sur le prochain arrêt vide
-        setTimeout(() => {
-          // Logique pour focus sur le prochain champ d'arrêt
-        }, 100);
-      } else if (!destination) {
-        // Si tous les arrêts sont remplis, focus sur la destination
-        setActiveInput('destination');
-        setTimeout(() => {
-          destinationInputRef.current?.focus();
-        }, 100);
-      }
+      // Toujours naviguer vers le champ de destination après avoir sélectionné un arrêt
+      setActiveInput('destination');
+      setTimeout(() => {
+        destinationInputRef.current?.focus();
+      }, 100);
     } else {
       // C'est la destination finale
       if (address === startLocation || stops.includes(address)) {
@@ -333,8 +416,19 @@ export default function SearchScreen({ navigation }) {
   };
 
   const renderSuggestions = () => {
-    const suggestions = activeInput === 'start' ? startSuggestions : destinationSuggestions;
-    const iconColor = activeInput === 'start' ? '#4CAF50' : '#2196F3';
+    let suggestions = [];
+    let iconColor = '#2196F3';
+    
+    if (activeInput === 'start') {
+      suggestions = startSuggestions;
+      iconColor = '#4CAF50';
+    } else if (activeInput.startsWith('stop_')) {
+      suggestions = stopSuggestions;
+      iconColor = '#FF9800';
+    } else {
+      suggestions = destinationSuggestions;
+      iconColor = '#2196F3';
+    }
 
     if (suggestions.length === 0) return null;
 
@@ -350,7 +444,19 @@ export default function SearchScreen({ navigation }) {
               <TouchableOpacity
                 key={index}
                 style={styles.suggestionItem}
-                onPress={() => handleSelectPlace(suggestion, activeInput === 'start')}
+                activeOpacity={0.7}
+                onPress={() => {
+                  console.log('Suggestion clicked:', suggestion.description, 'activeInput:', activeInput);
+                  
+                  if (activeInput === 'start') {
+                    handleSelectPlace(suggestion, true);
+                  } else if (activeInput.startsWith('stop_')) {
+                    const stopIndex = parseInt(activeInput.split('_')[1]);
+                    handleSelectPlace(suggestion, false, stopIndex);
+                  } else {
+                    handleSelectPlace(suggestion, false);
+                  }
+                }}
               >
                 <MaterialIcons 
                   name={suggestion.isLandmark ? "place" : "location-on"} 
@@ -438,11 +544,17 @@ export default function SearchScreen({ navigation }) {
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          onPress={() => {
+            // Retourner vers HomeScreen en réinitialisant la pile de navigation
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Home' }],
+            });
+          }}
         >
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Départ</Text>
+        <Text style={styles.headerTitle}>Recherche</Text>
       </View>
 
       <View style={styles.searchContainer}>
@@ -472,6 +584,12 @@ export default function SearchScreen({ navigation }) {
             {startLocation === 'Position actuelle' && (
               <MaterialIcons name="my-location" size={20} color="#4CAF50" style={{ marginRight: 8 }} />
             )}
+            <TouchableOpacity 
+              style={styles.addButton}
+              onPress={handleAddStop}
+            >
+              <Ionicons name="add" size={24} color="#4CAF50" />
+            </TouchableOpacity>
           </View>
 
           {renderStops()}
@@ -499,12 +617,6 @@ export default function SearchScreen({ navigation }) {
                 searchPlaces(text, false);
               }}
             />
-            <TouchableOpacity 
-              style={styles.addButton}
-              onPress={handleAddStop}
-            >
-              <Ionicons name="add" size={24} color="#2196F3" />
-            </TouchableOpacity>
           </View>
 
           {!isOnline && (
@@ -561,43 +673,51 @@ export default function SearchScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#000000',
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingTop: Platform.OS === 'ios' ? 50 : 30,
+    paddingTop: 60,
+    paddingBottom: 30,
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    alignItems: 'center',
+    position: 'relative',
   },
   backButton: {
-    padding: 8,
+    position: 'absolute',
+    top: 60,
+    left: 20,
     borderRadius: 20,
+    padding: 8,
+    zIndex: 1,
   },
   headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 32,
+    fontWeight: 'bold',
     color: '#fff',
-    marginRight: 40,
+    marginBottom: 8,
+    textAlign: 'center',
   },
   searchContainer: {
     paddingHorizontal: 20,
   },
   locationInputs: {
-    backgroundColor: '#2a2a2a',
-    borderRadius: 12,
-    padding: 15,
-    gap: 15,
+    backgroundColor: '#000000',
+    borderRadius: 15,
+    padding: 20,
+    gap: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    backgroundColor: '#1a1a1a',
-    borderRadius: 8,
-    padding: 12,
+    gap: 12,
+    backgroundColor: '#000000',
+    borderRadius: 15,
+    paddingHorizontal: 15,
+    paddingVertical: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   inputIcon: {
     width: 24,
@@ -619,16 +739,20 @@ const styles = StyleSheet.create({
   addButton: {
     width: 40,
     height: 40,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   suggestionsContainer: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    marginTop: 10,
+    backgroundColor: '#000000',
+    borderRadius: 15,
+    marginTop: 16,
     maxHeight: 300,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   suggestionsList: {
     padding: 0,
@@ -636,9 +760,9 @@ const styles = StyleSheet.create({
   suggestionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 15,
+    padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#2a2a2a',
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
   suggestionTextContainer: {
     flex: 1,
@@ -649,16 +773,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   suggestionSecondaryText: {
-    color: '#8E8E93',
+    color: 'rgba(255, 255, 255, 0.7)',
     fontSize: 14,
     marginTop: 2,
   },
   divider: {
     paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingVertical: 16,
   },
   dividerText: {
-    color: '#8E8E93',
+    color: 'rgba(255, 255, 255, 0.7)',
     fontSize: 14,
     fontWeight: '500',
   },
@@ -668,8 +792,8 @@ const styles = StyleSheet.create({
   placeItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 15,
-    gap: 15,
+    paddingVertical: 16,
+    gap: 16,
   },
   placeInfo: {
     flex: 1,
@@ -680,16 +804,16 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   placeAddress: {
-    color: '#8E8E93',
+    color: 'rgba(255, 255, 255, 0.7)',
     fontSize: 14,
   },
   specialOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 15,
+    padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#2a2a2a',
-    backgroundColor: '#1a1a1a',
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: '#000000',
   },
   specialOptionText: {
     color: '#fff',
@@ -703,18 +827,20 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 107, 107, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 5,
+    marginLeft: 8,
+    borderWidth: 1,
+    borderColor: '#ff6b6b',
   },
   smsInputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    backgroundColor: '#1a1a1a',
-    borderRadius: 8,
-    padding: 12,
+    gap: 12,
+    backgroundColor: '#000000',
+    borderRadius: 15,
+    paddingHorizontal: 15,
+    paddingVertical: 16,
     borderWidth: 1,
     borderColor: '#FF9800',
-    borderStyle: 'dashed',
   },
   smsInputContent: {
     flex: 1,
@@ -725,7 +851,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   smsInputSubtext: {
-    color: '#666',
+    color: 'rgba(255, 255, 255, 0.4)',
     fontSize: 12,
     marginTop: 2,
   },

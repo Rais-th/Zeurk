@@ -42,6 +42,8 @@ import ScheduleRideScreen from './src/screens/ScheduleRideScreen';
 import SMSRideRequestScreen from './src/screens/SMSRideRequestScreen';
 import DriverDashboard from './src/screens/DriverDashboard/DriverDashboard';
 import HomeScreen from './src/screens/HomeScreen';
+import WelcomeDriver from './src/screens/WelcomeDriver';
+import WelcomePassenger from './src/screens/WelcomePassenger';
 
 const Stack = createNativeStackNavigator();
 
@@ -139,6 +141,9 @@ function NavigationWrapper() {
         {/* Authentication screens */}
         <Stack.Screen name="Auth" component={AuthScreen} />
         <Stack.Screen name="PassengerAuth" component={PassengerAuthScreen} />
+        <Stack.Screen name="WelcomeDriver" component={WelcomeDriver} />
+        <Stack.Screen name="WelcomePassenger" component={WelcomePassenger} />
+        <Stack.Screen name="Welcome" component={WelcomeDriver} />
       </Stack.Navigator>
     </NavigationContainer>
   );

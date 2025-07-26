@@ -9,6 +9,7 @@ export default {
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
+    "scheme": "zeurk",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -20,6 +21,7 @@ export default {
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.Zeurk.app",
+      "scheme": "zeurk",
       "config": {
         "googleMapsApiKey": process.env.GOOGLE_MAPS_APIKEY
       }
@@ -30,6 +32,7 @@ export default {
         "backgroundColor": "#1a1a1a"
       },
       "package": "com.Zeurk.app",
+      "scheme": "zeurk",
       "config": {
         "googleMaps": {
           "apiKey": process.env.GOOGLE_MAPS_APIKEY

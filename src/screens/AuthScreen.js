@@ -67,8 +67,8 @@ const AuthScreen = ({ navigation, route }) => {
           setError(`Erreur d'inscription: ${error.message}`);
         } else {
           console.log('✅ Inscription réussie');
-          // Navigate to DriverDashboard after successful signup
-          navigation.navigate('DriverDashboard');
+          // Navigate to WelcomeDriver after successful signup
+          navigation.navigate('WelcomeDriver', { userName: fullName });
         }
       } else {
         console.log('🔐 Tentative de connexion...');

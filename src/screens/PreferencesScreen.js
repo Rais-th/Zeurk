@@ -159,10 +159,11 @@ const PreferencesScreen = ({ navigation }) => {
                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
                       
                       // Supprimer l'avatar de Firebase Storage s'il existe
-                      if (user.photoURL && user.photoURL.includes('firebase')) {
+                      if (user.photoURL && typeof user.photoURL === 'string' && user.photoURL.includes('firebase')) {
                         try {
-                          const oldFileName = user.photoURL.split('/').pop();
-                          if (oldFileName) {
+                          const urlParts = user.photoURL.split('/');
+                          const oldFileName = urlParts[urlParts.length - 1];
+                          if (oldFileName && oldFileName.trim() !== '') {
                             await deleteImageFromStorage(`avatars/${user.uid}/${oldFileName}`);
                           }
                         } catch (error) {

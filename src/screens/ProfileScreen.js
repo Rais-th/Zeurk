@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Image, FlatList, Pressable, Button, Alert, ActivityIndicator, RefreshControl } from 'react-native';
 import { FontAwesome5, Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -285,10 +286,11 @@ const ProfileScreen = ({ navigation }) => {
           const fileName = `avatars/${user.id}/avatar_${Date.now()}.jpg`;
           
           // Delete old avatar if it exists in Firebase Storage
-          if (profile?.avatar_url && profile.avatar_url.includes('firebase')) {
+          if (profile?.avatar_url && typeof profile.avatar_url === 'string' && profile.avatar_url.includes('firebase')) {
             try {
-              const oldFileName = profile.avatar_url.split('/').pop();
-              if (oldFileName) {
+              const urlParts = profile.avatar_url.split('/');
+              const oldFileName = urlParts[urlParts.length - 1];
+              if (oldFileName && oldFileName.trim() !== '') {
                 await deleteImageFromStorage(`avatars/${user.id}/${oldFileName}`);
               }
             } catch (error) {
@@ -337,6 +339,18 @@ const ProfileScreen = ({ navigation }) => {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert('Erreur', 'Impossible de sélectionner l\'image. Veuillez réessayer.');
       setLoading(false);
+    }
+  };
+
+  const handleBecomeDriver = () => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      
+      // Naviguer vers AuthScreen avec le mode inscription activé
+      navigation.navigate('Auth', { forceSignUp: true });
+    } catch (error) {
+      console.error('❌ Erreur dans handleBecomeDriver:', error);
+      Alert.alert('Erreur', 'Une erreur est survenue. Veuillez réessayer.');
     }
   };
 
@@ -421,12 +435,6 @@ const ProfileScreen = ({ navigation }) => {
         </TouchableOpacity>
         {user && (
           <View style={styles.headerProfileCenter}>
-            {/* Profile type badge */}
-            <View style={[styles.profileTypeBadge, profileType === 'driver' ? styles.driverBadge : styles.passengerBadge]}>
-              <Text style={styles.profileTypeBadgeText}>
-                Type: {profileType === 'driver' ? 'Driver' : 'Passenger'}
-              </Text>
-            </View>
             <View style={styles.avatarContainerHeader}>
               {profile?.avatar_url && profile.avatar_url.trim() !== '' ? (
                 <Image 
@@ -487,7 +495,31 @@ const ProfileScreen = ({ navigation }) => {
                       <Text style={styles.statLabel}>Membre</Text>
                     </View>
                   </View>
-                  {/* Remove the 'Devenir Conducteur' button entirely */}
+                  
+                  {/* Bouton pour devenir conducteur - seulement pour les passagers */}
+                  {profileType === 'passenger' && (
+                    <TouchableOpacity 
+                      style={styles.becomeDriverButton}
+                      onPress={handleBecomeDriver}
+                      activeOpacity={0.8}
+                    >
+                      <LinearGradient
+                        colors={['#00C851', '#007E33', '#0099CC']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.becomeDriverButtonContent}
+                      >
+                        <View style={styles.becomeDriverIconContainer}>
+                          <Ionicons name="car-sport" size={24} color="#fff" />
+                        </View>
+                        <View style={styles.becomeDriverTextContainer}>
+                          <Text style={styles.becomeDriverTitle}>Devenir Conducteur</Text>
+                          <Text style={styles.becomeDriverSubtitle}>Gagnez de l'argent en conduisant</Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={20} color="#fff" />
+                      </LinearGradient>
+                    </TouchableOpacity>
+                  )}
                 </View>
               </View>
               {isOfflineData && (
@@ -787,15 +819,57 @@ const styles = StyleSheet.create({
     fontWeight: '600', // Semibold per standards
   },
   becomeDriverButton: {
+    marginTop: 20,
+    marginHorizontal: 4,
+    borderRadius: 20,
+    overflow: 'hidden',
+    elevation: 12,
+    shadowColor: '#00C851',
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+  },
+  becomeDriverButtonContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 149, 0, 0.1)', // Accent orange per standards
-    paddingHorizontal: 16,
-    paddingVertical: 12, // Standard button padding per standards
-    borderRadius: 15, // Standard border radius per standards
-    borderWidth: 1,
-    borderColor: 'rgba(255, 149, 0, 0.2)', // Accent orange per standards
-    marginTop: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    position: 'relative',
+  },
+  becomeDriverIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  becomeDriverTextContainer: {
+    flex: 1,
+  },
+  becomeDriverTitle: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '600',
+    marginBottom: 2,
+    letterSpacing: -0.3,
+  },
+  becomeDriverSubtitle: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 13,
+    fontWeight: '400',
+    letterSpacing: -0.1,
   },
   becomeDriverText: {
     color: '#FF9500', // Accent orange per standards
@@ -803,24 +877,6 @@ const styles = StyleSheet.create({
     fontWeight: '600', // Semibold per standards
     marginLeft: 8,
     marginRight: 8,
-  },
-  profileTypeBadge: {
-    alignSelf: 'center',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    marginBottom: 8,
-  },
-  driverBadge: {
-    backgroundColor: '#FF9500',
-  },
-  passengerBadge: {
-    backgroundColor: '#007AFF',
-  },
-  profileTypeBadgeText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 13,
   },
 });
 
