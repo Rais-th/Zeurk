@@ -313,6 +313,12 @@ animations: {
 - **List items**: 20px icons
 - **Status indicators**: 16px icons
 
+### Exit/Close Button Rules
+- **NEVER use background**: Exit arrows and close buttons must be transparent
+- **Icon only**: Use only the icon without any background color or border
+- **Padding only**: Apply padding for touch target, but no visual background
+- **Consistent styling**: Always use transparent background for exit/close actions
+
 ## Error Handling
 
 ### Error States
@@ -350,6 +356,14 @@ successContainer: {
 2. **Consistent naming**: Use descriptive style names
 3. **Reusable components**: Create shared components for common patterns
 4. **Platform considerations**: Handle iOS/Android differences
+
+### Haptic Feedback Requirements
+- **MANDATORY**: All interactive elements MUST include haptic feedback
+- **Button presses**: Use `Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)`
+- **Success actions**: Use `Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)`
+- **Error actions**: Use `Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)`
+- **Selection changes**: Use `Haptics.selectionAsync()`
+- **Import required**: Always import `* as Haptics from 'expo-haptics'`
 
 ### Performance
 - **Optimize images**: Use appropriate formats and sizes
