@@ -19,20 +19,15 @@ This checklist ensures all necessary information and documents are collected for
 - [ ] **Modèle du véhicule** (ex: Corolla, Civic, Sentra) - *Recommandé: Corolla, Sentra, Accent*
 - [ ] **Année de fabrication** - *Maximum 15 ans pour l'importation en RDC, et pour Zeurk*
 - [ ] **Numéro d'identification du véhicule (VIN/Numéro de châssis)** - *Format à 17 caractères requis*
-- [ ] **Couleur** (Principale et secondaire si applicable)
-- [ ] **Nombre de portes** - *Minimum 4 portes pour les opérations Zeurk*
-- [ ] **Capacité de passagers** (incluant le conducteur) - *Minimum 4 passagers (hors conducteur) pour les opérations Zeurk*
-- [ ] **Type de carburant** - *Ex: Essence, Diesel (les plus courants à Kinshasa)*
-- [ ] **Type de transmission** - *Ex: Automatique (recommandé pour la circulation à Kinshasa), Manuelle*
-- [ ] **Numéro de moteur**
+- [ ] **Couleur** 
+- [ ] **Photo du véhicule** - *Format JPG, 1024x768 px, 10 Mo max*
+
  
 
 ### État et caractéristiques du véhicule
 - [ ] **État général** (Excellent, Bon, Moyen, Mauvais) - *Minimum "Bon" pour Zeurk (intérieur et extérieur propres, sans dommages majeurs)*
-- [ ] **Kilométrage/Lecture du compteur kilométrique** - *Maximum 300 000 km pour l'acceptation sur la plateforme*
-- [ ] **Climatisation** (Oui/Non) - *Fortement recommandée pour le climat de Kinshasa*
-- [ ] **Caractéristiques de sécurité** (Airbags, ABS, etc.) - *Minimum: ceintures de sécurité fonctionnelles, freins fonctionnels, roue de secours, cric, clés de roue, feux fonctionnels, klaxon fonctionnel*
-
+- [ ] **Kilométrage/Lecture du compteur kilométrique** - *Doit être correctement lu et indiqué sur le véhicule*
+- [ ] **Climatisation** (Oui/Non) - 
 ---
 
 ## 📄 Required Documents
@@ -41,118 +36,41 @@ This checklist ensures all necessary information and documents are collected for
 - [ ] **Certificat d'immatriculation du véhicule original** - *"Carte Grise" en français*
 - [ ] **Copie certifiée conforme du certificat d'immatriculation** - *Copie notariée requise*
 - [ ] **Certificat de contrôle technique** - *Renouvellement annuel requis (inspection annuelle obligatoire)*
-- [ ] **Certificat d'origine du véhicule** (si importé)
-- [ ] **Déclaration d'importation et quittance douanière** (pour les véhicules importés)
-- [ ] **Certificat BIVAC** (pour les véhicules importés, atteste de la conformité avant l'importation)
 
 
 ### Documentation d'assurance
-- [ ] **Certificat d'assurance responsabilité civile** - *Obligatoire selon la loi de la RDC (avec mention 'transport public de personnes')*
-- [ ] **Assurance véhicule commercial** - *Requise pour les opérations de covoiturage*
+- [ ] **Certificat d'assurance responsabilité civile** - Photo
 - [ ] **Numéro de police d'assurance** - *Conserver les copies numériques et physiques*
 - [ ] **Date d'expiration de l'assurance** - *Doit être valide pour un minimum de 6 mois*
-- [ ] **Détails de la compagnie d'assurance** - *Doit être un assureur agréé en RDC*
-- [ ] **Page de déclaration d'assurance** - *Incluant les détails du véhicule et le VIN*
+- [ ] **Page de déclaration d'assurance** - *Incluant les détails du véhicule et le VIN* - Photo
 
 
 ### Plaques d'immatriculation
-- [ ] **Plaques d'immatriculation actuelles de la RDC** - *Format européen post-avril 2009*
+- [ ] **Plaques d'immatriculation actuelles de la RDC** 
 - [ ] **Numéro de plaque** - *Format: CGO + 4 chiffres + 2 lettres*
-- [ ] **Autocollant de pare-brise** - *Avec numéro de châssis correspondant*
-- [ ] **Date de renouvellement de l'immatriculation** - *Renouvellement annuel requis*
-- [ ] **Certificat d'installation de la plaque** - *D'un concessionnaire agréé*
-
 
 ---
 
-## 👤 Driver/Owner Information
-
 ### Documentation personnelle
-- [ ] **Permis de conduire valide** - *Permis RDC ou Permis de Conduire International*
-- [ ] **Catégorie de permis de conduire** - *Catégorie B requise pour les véhicules de passagers*
-  - Catégorie A: Motos et cyclomoteurs
+- [ ] **Permis de conduire valide** - *Permis RDC ou Permis de Conduire International* - Photo
+- [ ] **Catégorie de permis de conduire**
+  - Catégorie A: Motos et cyclomoteurs (requis pour Zeurk)
   - Catégorie B: Voitures et véhicules légers (requis pour Zeurk)
   - Catégorie C: Camions et véhicules lourds
   - Catégorie D: Autobus et transport de passagers
   - Catégorie E: Remorques et véhicules spéciaux
 - [ ] **Date d'expiration du permis** - *Doit être valide pour un minimum de 1 an*
-- [ ] **Passeport ou carte d'identité nationale** - *Pièce d'identité valide délivrée par le gouvernement*
-- [ ] **Certificat médical** - *Requis pour la demande/renouvellement de permis*
-- [ ] **Certificat d'examen de la vue** - *D'un établissement médical certifié*
-- [ ] **Certificat de réussite du cours théorique** - *Pour les nouvelles demandes de permis*
-- [ ] **Certificat de test de conduite** - *Achèvement du test pratique*
-- [ ] **Extrait de casier judiciaire** (recommandé par Zeurk, pour la sécurité des passagers)
+- [ ] **Passeport aussi optionnel** - Photo
+- [ ] **Extrait de casier judiciaire** (obligatoire pour les regulations)
 
 
 ### Documentation de propriété
 - [ ] **Preuve de propriété du véhicule** - *Titre ou contrat d'achat*
 - [ ] **Lettre d'autorisation** - *Si le conducteur n'est pas le propriétaire (notariée)*
-- [ ] **Lettre de la banque** - *Si le véhicule est financé (détails du prêt)*
-- [ ] **Procuration** - *Si applicable (notariée)*
-- [ ] **Preuve de lien de parenté** - *Si le véhicule appartient à un membre de la famille*
-
-
 ---
 
-## 🏢 Commercial Operation Requirements
-
-### Enregistrement commercial
-- [ ] **Licence commerciale** - *Requise pour l'exploitation de véhicules commerciaux*
-- [ ] **Numéro d'identification fiscale** - *RCCM (Registre de Commerce et du Crédit Mobilier)*
-- [ ] **Permis de véhicule commercial** - *Autorisation du Ministère des Transports*
-- [ ] **Enregistrement sur la plateforme de covoiturage** - *Contrat de chauffeur Zeurk*
-- [ ] **Carte professionnelle de chauffeur** - *Si requise par les autorités locales*
 
 
-### Sécurité et conformité
-- [ ] **Certificat d'inspection de sécurité du véhicule** - *Inspection technique annuelle*
-- [ ] **Certificat de navigabilité** - *Valide pour 12 mois*
-- [ ] **Extincteur** - *Portable, adapté au véhicule*
-- [ ] **Trousse de premiers secours** - *Fournitures médicales de base*
-- [ ] **Informations de contact d'urgence** - *Détails du conducteur et du propriétaire du véhicule*
-- [ ] **Triangles réfléchissants** - *Pour les urgences routières*
-- [ ] **Normes de propreté du véhicule** - *Entretien intérieur et extérieur*
-
-
-### Exigences de la plateforme Zeurk
-- [ ] **Vérification des antécédents du conducteur** - *Vérification du casier judiciaire*
-- [ ] **Inspection du véhicule par Zeurk** - *Contrôle de sécurité spécifique à la plateforme*
-- [ ] **Achèvement de la formation du conducteur** - *Programme d'orientation du conducteur Zeurk*
-- [ ] **Compatibilité du téléphone mobile** - *Android/iOS avec capacité GPS (Android 8.0+ ou iOS 13.0+ recommandé)*
-- [ ] **Détails du compte bancaire** - *Pour le traitement des paiements (compte bancaire local en CDF ou USD)*
-- [ ] **Contact d'urgence** - *Personne joignable 24h/24 et 7j/7 (au moins deux contacts)*
-
-
----
-
-## 💰 Financial Information
-
-### Évaluation du véhicule
-- [ ] **Valeur marchande actuelle** - *En Francs Congolais (CDF) ou USD (selon le marché local)*
-- [ ] **Prix d'achat** - *Montant d'achat original*
-- [ ] **Montant du prêt en cours** - *Si financé*
-- [ ] **Montant du paiement mensuel** - *Si applicable*
-- [ ] **Taux de dépréciation** - *Diminution annuelle de la valeur*
-
-
-### Coûts d'assurance (Tarifs du marché RDC)
-- [ ] **Prime d'assurance annuelle** - *Généralement 3-5% de la valeur du véhicule*
-- [ ] **Responsabilité civile** - *Couverture minimale de 500 000 CDF*
-- [ ] **Surtaxe pour usage commercial** - *20-30% supplémentaire pour le covoiturage*
-- [ ] **Montant de la franchise** - *Généralement 100 000-500 000 CDF*
-- [ ] **Limites de couverture** - *Minimum 2 000 000 CDF recommandé*
-
-
-### Coûts d'exploitation (Estimations Kinshasa)
-- [ ] **Coûts de carburant** - *Prix actuels de l'essence à Kinshasa*
-- [ ] **Budget d'entretien** - *Entretien mensuel du véhicule*
-- [ ] **Frais d'immatriculation** - *Coûts de renouvellement annuel*
-- [ ] **Frais d'inspection** - *Coûts de contrôle technique*
-- [ ] **Commission Zeurk** - *Pourcentage des frais de plateforme*
-- [ ] **Frais de stationnement** - *Coûts de stationnement quotidiens/mensuels*
-
-
----
 
 ## 📱 Digital Requirements
 
