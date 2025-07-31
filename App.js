@@ -16,6 +16,8 @@ import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import OfflineIndicator from './src/components/OfflineIndicator';
 import networkManager from './src/utils/networkManager';
 import { notificationService } from './src/services/notificationService';
+import productionCleanupService from './src/services/productionCleanupService';
+import { getConfig, devLog } from './src/config/productionConfig';
 import AuthScreen from './src/screens/AuthScreen';
 import PassengerAuthScreen from './src/screens/PassengerAuthScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
@@ -57,12 +59,28 @@ function NavigationWrapper() {
     let networkUnsubscribe;
     
     const initializeServices = async () => {
+      const config = getConfig();
+      devLog('🚀 Initialisation de l\'app Zeurk...', {
+        production: config.IS_PRODUCTION,
+        autoCleanup: config.DATA_MANAGEMENT.AUTO_CLEANUP_TEST_DATA
+      });
+      
       // Initialize network manager and store unsubscribe function
       networkUnsubscribe = networkManager.initialize();
       
       // Initialize notification service
       const token = await notificationService.initialize();
-      console.log('🔔 App initialisé avec token:', token);
+      devLog('🔔 App initialisé avec token:', token);
+      
+      // Production cleanup service - nettoyer les données de test
+      if (config.IS_PRODUCTION) {
+        devLog('🧹 Mode production détecté - démarrage du nettoyage automatique...');
+        await productionCleanupService.autoCleanupOnStartup();
+        
+        // Vérifier le statut de production
+        const status = await productionCleanupService.getProductionStatus();
+        devLog('📊 Statut production:', status);
+      }
       
       // Setup notification listeners after navigation is ready
       if (navigationRef.current) {

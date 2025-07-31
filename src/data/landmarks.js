@@ -254,3 +254,240 @@ export const getPopularLandmarks = () => {
     )
     .slice(0, 8);
 };
+
+// Lieux populaires par ville - système intelligent
+const popularPlacesByCity = {
+  // République Démocratique du Congo
+  'Kinshasa': [
+    { name: "Centre Commercial Zando", address: "Avenue du Commerce, Kinshasa", icon: "storefront" },
+    { name: "Aéroport de N'djili", address: "N'djili, Kinshasa", icon: "local-airport" },
+    { name: "Marché Central", address: "Boulevard du 30 Juin, Kinshasa", icon: "shopping-cart" },
+    { name: "Université de Kinshasa", address: "Mont Amba, Kinshasa", icon: "school" },
+    { name: "Stade des Martyrs", address: "Boulevard Triomphal, Kinshasa", icon: "sports-soccer" }
+  ],
+  'Lubumbashi': [
+    { name: "Aéroport de Lubumbashi", address: "Aéroport de Lubumbashi, Lubumbashi", icon: "local-airport" },
+    { name: "Université de Lubumbashi", address: "Université de Lubumbashi, Lubumbashi", icon: "school" },
+    { name: "Marché Central", address: "Centre-ville, Lubumbashi", icon: "shopping-cart" },
+    { name: "Stade TP Mazembe", address: "Stade TP Mazembe, Lubumbashi", icon: "sports-soccer" },
+    { name: "Gare de Lubumbashi", address: "Gare de Lubumbashi, Lubumbashi", icon: "train" }
+  ],
+  'Goma': [
+    { name: "Aéroport de Goma", address: "Aéroport de Goma, Goma", icon: "local-airport" },
+    { name: "Université de Goma", address: "Université de Goma, Goma", icon: "school" },
+    { name: "Marché Central", address: "Centre-ville, Goma", icon: "shopping-cart" },
+    { name: "Lac Kivu", address: "Lac Kivu, Goma", icon: "water" },
+    { name: "Frontière Rwanda", address: "Frontière Rwanda-RDC, Goma", icon: "location-on" }
+  ],
+
+  // France
+  'Paris': [
+    { name: "Aéroport Charles de Gaulle", address: "Aéroport Charles de Gaulle, Paris", icon: "local-airport" },
+    { name: "Gare du Nord", address: "Gare du Nord, Paris", icon: "train" },
+    { name: "Tour Eiffel", address: "Tour Eiffel, Paris", icon: "place" },
+    { name: "Champs-Élysées", address: "Champs-Élysées, Paris", icon: "storefront" },
+    { name: "Louvre", address: "Musée du Louvre, Paris", icon: "museum" }
+  ],
+  'Lyon': [
+    { name: "Aéroport Lyon-Saint Exupéry", address: "Aéroport Lyon-Saint Exupéry, Lyon", icon: "local-airport" },
+    { name: "Gare de Lyon Part-Dieu", address: "Gare de Lyon Part-Dieu, Lyon", icon: "train" },
+    { name: "Vieux Lyon", address: "Vieux Lyon, Lyon", icon: "place" },
+    { name: "Université Lyon 1", address: "Université Lyon 1, Lyon", icon: "school" },
+    { name: "Centre Commercial Part-Dieu", address: "Centre Commercial Part-Dieu, Lyon", icon: "storefront" }
+  ],
+  'Marseille': [
+    { name: "Aéroport Marseille Provence", address: "Aéroport Marseille Provence, Marseille", icon: "local-airport" },
+    { name: "Gare Saint-Charles", address: "Gare Saint-Charles, Marseille", icon: "train" },
+    { name: "Vieux-Port", address: "Vieux-Port, Marseille", icon: "directions-boat" },
+    { name: "Notre-Dame de la Garde", address: "Notre-Dame de la Garde, Marseille", icon: "church" },
+    { name: "Université d'Aix-Marseille", address: "Université d'Aix-Marseille, Marseille", icon: "school" }
+  ],
+
+  // Belgique
+  'Brussels': [
+    { name: "Aéroport de Bruxelles", address: "Aéroport de Bruxelles, Brussels", icon: "local-airport" },
+    { name: "Gare Centrale", address: "Gare Centrale, Brussels", icon: "train" },
+    { name: "Grand-Place", address: "Grand-Place, Brussels", icon: "place" },
+    { name: "Université Libre de Bruxelles", address: "Université Libre de Bruxelles, Brussels", icon: "school" },
+    { name: "Atomium", address: "Atomium, Brussels", icon: "place" }
+  ],
+  'Bruxelles': [
+    { name: "Aéroport de Bruxelles", address: "Aéroport de Bruxelles, Bruxelles", icon: "local-airport" },
+    { name: "Gare Centrale", address: "Gare Centrale, Bruxelles", icon: "train" },
+    { name: "Grand-Place", address: "Grand-Place, Bruxelles", icon: "place" },
+    { name: "Université Libre de Bruxelles", address: "Université Libre de Bruxelles, Bruxelles", icon: "school" },
+    { name: "Atomium", address: "Atomium, Bruxelles", icon: "place" }
+  ],
+
+  // Canada
+  'Montreal': [
+    { name: "Aéroport Montréal-Trudeau", address: "Aéroport Montréal-Trudeau, Montreal", icon: "local-airport" },
+    { name: "Gare Centrale", address: "Gare Centrale, Montreal", icon: "train" },
+    { name: "Université McGill", address: "Université McGill, Montreal", icon: "school" },
+    { name: "Vieux-Montréal", address: "Vieux-Montréal, Montreal", icon: "place" },
+    { name: "Centre-ville", address: "Centre-ville, Montreal", icon: "storefront" }
+  ],
+  'Montréal': [
+    { name: "Aéroport Montréal-Trudeau", address: "Aéroport Montréal-Trudeau, Montréal", icon: "local-airport" },
+    { name: "Gare Centrale", address: "Gare Centrale, Montréal", icon: "train" },
+    { name: "Université McGill", address: "Université McGill, Montréal", icon: "school" },
+    { name: "Vieux-Montréal", address: "Vieux-Montréal, Montréal", icon: "place" },
+    { name: "Centre-ville", address: "Centre-ville, Montréal", icon: "storefront" }
+  ],
+  'Toronto': [
+    { name: "Aéroport Pearson", address: "Aéroport Pearson, Toronto", icon: "local-airport" },
+    { name: "Union Station", address: "Union Station, Toronto", icon: "train" },
+    { name: "CN Tower", address: "CN Tower, Toronto", icon: "place" },
+    { name: "Université de Toronto", address: "Université de Toronto, Toronto", icon: "school" },
+    { name: "Eaton Centre", address: "Eaton Centre, Toronto", icon: "storefront" }
+  ],
+
+  // États-Unis
+  'New York': [
+    { name: "JFK Airport", address: "JFK Airport, New York", icon: "local-airport" },
+    { name: "Times Square", address: "Times Square, New York", icon: "place" },
+    { name: "Central Park", address: "Central Park, New York", icon: "park" },
+    { name: "Columbia University", address: "Columbia University, New York", icon: "school" },
+    { name: "Grand Central", address: "Grand Central Terminal, New York", icon: "train" }
+  ],
+  'Los Angeles': [
+    { name: "LAX Airport", address: "LAX Airport, Los Angeles", icon: "local-airport" },
+    { name: "Hollywood", address: "Hollywood, Los Angeles", icon: "place" },
+    { name: "UCLA", address: "UCLA, Los Angeles", icon: "school" },
+    { name: "Santa Monica Pier", address: "Santa Monica Pier, Los Angeles", icon: "place" },
+    { name: "Downtown LA", address: "Downtown LA, Los Angeles", icon: "storefront" }
+  ],
+
+  // Royaume-Uni
+  'London': [
+    { name: "Heathrow Airport", address: "Heathrow Airport, London", icon: "local-airport" },
+    { name: "King's Cross Station", address: "King's Cross Station, London", icon: "train" },
+    { name: "Big Ben", address: "Big Ben, London", icon: "place" },
+    { name: "Oxford Street", address: "Oxford Street, London", icon: "storefront" },
+    { name: "University College London", address: "University College London, London", icon: "school" }
+  ],
+
+  // Autres pays africains
+  'Lagos': [
+    { name: "Aéroport de Lagos", address: "Aéroport de Lagos, Lagos", icon: "local-airport" },
+    { name: "Victoria Island", address: "Victoria Island, Lagos", icon: "place" },
+    { name: "Université de Lagos", address: "Université de Lagos, Lagos", icon: "school" },
+    { name: "Marché de Balogun", address: "Marché de Balogun, Lagos", icon: "shopping-cart" },
+    { name: "Ikeja", address: "Ikeja, Lagos", icon: "storefront" }
+  ],
+  'Dakar': [
+    { name: "Aéroport Blaise Diagne", address: "Aéroport Blaise Diagne, Dakar", icon: "local-airport" },
+    { name: "Université Cheikh Anta Diop", address: "Université Cheikh Anta Diop, Dakar", icon: "school" },
+    { name: "Plateau", address: "Plateau, Dakar", icon: "place" },
+    { name: "Marché Sandaga", address: "Marché Sandaga, Dakar", icon: "shopping-cart" },
+    { name: "Île de Gorée", address: "Île de Gorée, Dakar", icon: "directions-boat" }
+  ],
+  'Abidjan': [
+    { name: "Aéroport Félix Houphouët-Boigny", address: "Aéroport Félix Houphouët-Boigny, Abidjan", icon: "local-airport" },
+    { name: "Plateau", address: "Plateau, Abidjan", icon: "place" },
+    { name: "Université Félix Houphouët-Boigny", address: "Université Félix Houphouët-Boigny, Abidjan", icon: "school" },
+    { name: "Marché de Treichville", address: "Marché de Treichville, Abidjan", icon: "shopping-cart" },
+    { name: "Cocody", address: "Cocody, Abidjan", icon: "storefront" }
+  ]
+};
+
+// Lieux populaires génériques pour les villes non répertoriées
+const genericPopularPlaces = [
+  { name: "Aéroport", address: "Aéroport principal", icon: "local-airport" },
+  { name: "Gare", address: "Gare principale", icon: "train" },
+  { name: "Centre-ville", address: "Centre-ville", icon: "storefront" },
+  { name: "Université", address: "Université principale", icon: "school" },
+  { name: "Hôpital", address: "Hôpital principal", icon: "local-hospital" }
+];
+
+/**
+ * Obtient les lieux populaires adaptés à la ville de l'utilisateur
+ * @param {string} userCity - La ville détectée de l'utilisateur
+ * @returns {Array} - Liste des lieux populaires pour cette ville
+ */
+export const getPopularPlacesForCity = (userCity) => {
+  if (!userCity || userCity === 'Ville inconnue') {
+    // Retourner les lieux de Kinshasa par défaut
+    return popularPlacesByCity['Kinshasa'] || genericPopularPlaces;
+  }
+
+  // Normaliser le nom de la ville (enlever les accents, mettre en forme)
+  const normalizedCity = userCity.trim();
+  
+  // Recherche directe
+  if (popularPlacesByCity[normalizedCity]) {
+    return popularPlacesByCity[normalizedCity];
+  }
+
+  // Recherche insensible à la casse
+  const cityKey = Object.keys(popularPlacesByCity).find(
+    key => key.toLowerCase() === normalizedCity.toLowerCase()
+  );
+  
+  if (cityKey) {
+    return popularPlacesByCity[cityKey];
+  }
+
+  // Recherche partielle (pour gérer les variations comme "Paris 1er", "Montreal QC", etc.)
+  const partialMatch = Object.keys(popularPlacesByCity).find(
+    key => normalizedCity.toLowerCase().includes(key.toLowerCase()) || 
+           key.toLowerCase().includes(normalizedCity.toLowerCase())
+  );
+  
+  if (partialMatch) {
+    return popularPlacesByCity[partialMatch];
+  }
+
+  // Si aucune correspondance, générer des lieux génériques avec le nom de la ville
+  return genericPopularPlaces.map(place => ({
+    ...place,
+    address: `${place.address}, ${normalizedCity}`
+  }));
+};
+
+/**
+ * Recherche intelligente qui combine les landmarks locaux et les lieux populaires
+ * @param {string} query - Terme de recherche
+ * @param {string} userCity - Ville de l'utilisateur
+ * @param {number} limit - Nombre maximum de résultats
+ * @returns {Array} - Résultats de recherche combinés
+ */
+export const searchPlacesIntelligent = (query, userCity, limit = 5) => {
+  if (!query || query.length < 2) return [];
+
+  // Rechercher dans les landmarks locaux (Kinshasa)
+  const landmarkResults = searchLandmarks(query, Math.ceil(limit / 2));
+  
+  // Rechercher dans les lieux populaires de la ville de l'utilisateur
+  const cityPlaces = getPopularPlacesForCity(userCity);
+  const cityResults = [];
+  
+  if (cityPlaces && userCity !== 'Kinshasa') {
+    const normalizedQuery = query.toLowerCase();
+    
+    cityPlaces.forEach(place => {
+      const placeName = place.name.toLowerCase();
+      const placeAddress = place.address.toLowerCase();
+      
+      if (placeName.includes(normalizedQuery) || 
+          placeAddress.includes(normalizedQuery) ||
+          normalizedQuery.includes(placeName.split(' ')[0])) {
+        cityResults.push({
+          ...place,
+          description: `${place.name} • ${place.address}`,
+          place_id: `city_place_${place.name.replace(/\s+/g, '_').toLowerCase()}`,
+          isLandmark: true,
+          isCitySpecific: true
+        });
+      }
+    });
+  }
+
+  // Combiner et limiter les résultats
+  const combinedResults = [
+    ...cityResults.slice(0, Math.ceil(limit / 2)),
+    ...landmarkResults.slice(0, Math.floor(limit / 2))
+  ];
+
+  return combinedResults.slice(0, limit);
+};

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { auth, createUserDocument, getUserDocument } from '../config/firebase';
+import { auth, createUserDocument, getUserDocument, getDriverDocument } from '../config/firebase';
 import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut as firebaseSignOut, sendPasswordResetEmail } from 'firebase/auth';
 
 const AuthContext = createContext({});
@@ -22,17 +22,31 @@ export const AuthProvider = ({ children }) => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
-          // Get additional user data from Firestore
-          const userDoc = await getUserDocument(firebaseUser.uid);
-          const userData = {
-            id: firebaseUser.uid,
-            email: firebaseUser.email,
-            user_metadata: userDoc || {},
-            firebase_user: true
-          };
-          
-          setUser(userData);
-          await AsyncStorage.setItem('zeurk_user', JSON.stringify(userData));
+          // Check if user is a driver first
+          const driverDoc = await getDriverDocument(firebaseUser.uid);
+          if (driverDoc) {
+            const userData = {
+              id: firebaseUser.uid,
+              email: firebaseUser.email,
+              user_metadata: driverDoc,
+              firebase_user: true,
+              isDriver: true
+            };
+            setUser(userData);
+            await AsyncStorage.setItem('zeurk_user', JSON.stringify(userData));
+          } else {
+            // Fallback to generic user document for passengers
+            const userDoc = await getUserDocument(firebaseUser.uid);
+            const userData = {
+              id: firebaseUser.uid,
+              email: firebaseUser.email,
+              user_metadata: userDoc || {},
+              firebase_user: true,
+              isDriver: false
+            };
+            setUser(userData);
+            await AsyncStorage.setItem('zeurk_user', JSON.stringify(userData));
+          }
         } catch (error) {
           console.log('Error fetching user document:', error);
           // Fallback to basic Firebase user data
@@ -40,7 +54,8 @@ export const AuthProvider = ({ children }) => {
             id: firebaseUser.uid,
             email: firebaseUser.email,
             user_metadata: {},
-            firebase_user: true
+            firebase_user: true,
+            isDriver: false
           };
           setUser(basicUserData);
           await AsyncStorage.setItem('zeurk_user', JSON.stringify(basicUserData));
@@ -55,21 +70,41 @@ export const AuthProvider = ({ children }) => {
     return unsubscribe;
   }, []);
 
-  const signInWithEmail = async (email, password) => {
+  const signInWithEmail = async (email, password, userType = 'passenger') => {
     try {
       console.log('🔐 Attempting Firebase signin...');
       
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const firebaseUser = userCredential.user;
       
-      // Get additional user data from Firestore
-      const userDoc = await getUserDocument(firebaseUser.uid);
-      const userData = {
-        id: firebaseUser.uid,
-        email: firebaseUser.email,
-        user_metadata: userDoc || {},
-        firebase_user: true
-      };
+      let userData;
+      
+      if (userType === 'driver') {
+        // For drivers, check the drivers collection specifically
+        const driverDoc = await getDriverDocument(firebaseUser.uid);
+        if (!driverDoc) {
+          return { 
+            data: null, 
+            error: { message: 'Ce compte n\'est pas un compte conducteur' } 
+          };
+        }
+        
+        userData = {
+          id: firebaseUser.uid,
+          email: firebaseUser.email,
+          user_metadata: driverDoc,
+          firebase_user: true
+        };
+      } else {
+        // For passengers, use the generic user document
+        const userDoc = await getUserDocument(firebaseUser.uid);
+        userData = {
+          id: firebaseUser.uid,
+          email: firebaseUser.email,
+          user_metadata: userDoc || {},
+          firebase_user: true
+        };
+      }
       
       console.log('✅ Firebase signin successful');
       return { data: { user: userData }, error: null };

@@ -7,6 +7,7 @@ import {
   FlatList,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { colors, typography, spacing, borderRadius } from '../config/designTokens';
 
 const CategoryChip = memo(({ category, isSelected, onPress }) => (
@@ -15,7 +16,10 @@ const CategoryChip = memo(({ category, isSelected, onPress }) => (
       styles.chip,
       isSelected && styles.selectedChip
     ]}
-    onPress={() => onPress(category.id)}
+    onPress={() => {
+      Haptics.selectionAsync();
+      onPress(category.id);
+    }}
     activeOpacity={0.7}
     accessibilityRole="button"
     accessibilityLabel={`Filtrer par ${category.name}`}

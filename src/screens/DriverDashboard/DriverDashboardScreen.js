@@ -27,6 +27,8 @@ import { styles } from './styles';
 import { mapStyle, revenusData, chartData, chartLabels, paymentMethods, mockRideRequests } from './constants';
 import { PerformanceModal, FinancesModal, WithdrawModal, DepositModal, ProfileModal, SettingsPanel, RideRequestModal } from './shared/exports';
 import VehiclesAndDocumentsModal from './modals/VehiclesAndDocumentsModal';
+import { driverAutoRegistration } from '../../utils/driverAutoRegistration';
+import { useAuth } from '../../contexts/AuthContext';
 
 // Import des logos des opérateurs
 const airtelLogo = require('../../../assets/icons/airtel.jpg');
@@ -205,6 +207,7 @@ export default function DriverDashboardScreen({ navigation }) {
     try {
       requestLocationPermission();
       startAnimations();
+      autoRegisterDriver();
       console.log('🚗 DriverDashboard: Animations démarrées');
       // Animation continue de la flèche
       Animated.loop(
@@ -292,6 +295,27 @@ export default function DriverDashboardScreen({ navigation }) {
         }),
       ])
     ).start();
+  };
+
+  const { user } = useAuth();
+
+  const autoRegisterDriver = async () => {
+    if (!user?.id) {
+      console.log('❌ No user ID available for auto-registration');
+      return;
+    }
+
+    try {
+      console.log('🚗 Starting driver auto-registration...');
+      const success = await driverAutoRegistration.autoRegisterDriver(user.id);
+      if (success) {
+        console.log('✅ Driver auto-registered successfully');
+      } else {
+        console.log('⚠️ Driver auto-registration failed or already registered');
+      }
+    } catch (error) {
+      console.error('❌ Error in autoRegisterDriver:', error);
+    }
   };
 
   // Ouvrir la modal finances
@@ -591,9 +615,15 @@ export default function DriverDashboardScreen({ navigation }) {
     });
   };
 
-  const handleGoOnline = () => {
+  const handleGoOnline = async () => {
     // Feedback lourd pour action importante
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    
+    // Update driver status in drivers_live
+    if (user?.id) {
+      await driverAutoRegistration.updateDriverStatus(user.id, true);
+      console.log('✅ Driver marked as online in drivers_live');
+    }
     
     setDriverStatus('online');
     setAvailableRides(mockRideRequests); // Charger les courses disponibles
@@ -611,9 +641,15 @@ export default function DriverDashboardScreen({ navigation }) {
     startAnimations();
   };
 
-  const handleGoOffline = () => {
+  const handleGoOffline = async () => {
     // Feedback d'avertissement pour la déconnexion
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    
+    // Update driver status in drivers_live
+    if (user?.id) {
+      await driverAutoRegistration.updateDriverStatus(user.id, false);
+      console.log('✅ Driver marked as offline in drivers_live');
+    }
     
     setDriverStatus('offline');
     setAvailableRides([]); // Vider la liste des courses

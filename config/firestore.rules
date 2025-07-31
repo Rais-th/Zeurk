@@ -17,6 +17,12 @@ service cloud.firestore {
       allow write: if request.auth != null && request.auth.uid == driverId;
     }
     
+    // CONGO OPTIMIZED: drivers_live collection for real-time positions
+    match /drivers_live/{driverId} {
+      allow read: if true; // Public read for passengers to see drivers
+      allow write: if request.auth != null && request.auth.uid == driverId;
+    }
+    
     // Allow authenticated users to read and write their own rides
     match /rides/{rideId} {
       allow read, write: if request.auth != null && 

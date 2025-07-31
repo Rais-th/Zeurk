@@ -14,6 +14,7 @@ import * as Location from 'expo-location';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '../contexts/AuthContext';
+import locationService from '../utils/locationService';
 
 const mapStyle = [
   {
@@ -178,12 +179,35 @@ export default function DriverLanding({ navigation }) {
   const { user } = useAuth();
   const [userLocation, setUserLocation] = useState(null);
   const [activeRequests, setActiveRequests] = useState(8); // Simulé pour l'exemple
+  const [isTracking, setIsTracking] = useState(false); // CONGO: Driver tracking state
   const [mapRegion, setMapRegion] = useState({
     latitude: -4.4419,
     longitude: 15.2663,
     latitudeDelta: 0.09,
     longitudeDelta: 0.04,
   });
+
+  // CONGO: Toggle driver tracking
+  const toggleTracking = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    
+    if (!isTracking) {
+      // Start tracking
+      const success = await locationService.updateDriverPosition(user.uid, true);
+      if (success) {
+        locationService.startDriverTracking(user.uid, true);
+        setIsTracking(true);
+        Alert.alert('✅ Tracking activé', 'Vous êtes maintenant visible aux passagers');
+      } else {
+        Alert.alert('❌ Erreur', 'Impossible d\'activer le tracking');
+      }
+    } else {
+      // Stop tracking
+      locationService.stopDriverTracking(user.uid);
+      setIsTracking(false);
+      Alert.alert('⏹️ Tracking désactivé', 'Vous n\'êtes plus visible aux passagers');
+    }
+  };
 
   const handleStartDay = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -258,6 +282,18 @@ export default function DriverLanding({ navigation }) {
         <View style={styles.activeRequestsBadge}>
           <Text style={styles.activeRequestsText}>{activeRequests} requêtes actives</Text>
         </View>
+
+        {/* CONGO: Tracking toggle button */}
+        <TouchableOpacity 
+          style={[styles.trackingButton, isTracking && styles.trackingButtonActive]} 
+          onPress={toggleTracking}
+        >
+          <Ionicons 
+            name={isTracking ? "radio-button-on" : "radio-button-off"} 
+            size={20} 
+            color={isTracking ? "#00FF00" : "#fff"} 
+          />
+        </TouchableOpacity>
       </View>
 
       {/* Panneau d'action principal en bas */}
@@ -361,6 +397,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+  trackingButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  trackingButtonActive: {
+    backgroundColor: 'rgba(0, 255, 0, 0.1)',
+    borderColor: 'rgba(0, 255, 0, 0.3)',
+  },
   bottomPanel: {
     position: 'absolute',
     bottom: 0,
@@ -440,4 +490,4 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontWeight: '500',
   },
-}); 
+});

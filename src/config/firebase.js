@@ -40,14 +40,16 @@ try {
 const firestore = getFirestore(app);
 const storage = getStorage(app);
 
-export { auth, firestore, storage };
+// Export avec alias pour compatibilité
+export { auth, firestore, firestore as db, storage };
 
 // Collection names
 export const COLLECTIONS = {
   PASSENGERS: 'passengers',
   DRIVERS: 'drivers',
   RIDES: 'rides',
-  USERS: 'users' // Collection unifiée pour tous les utilisateurs
+  USERS: 'users', // Collection unifiée pour tous les utilisateurs
+  DRIVERS_LIVE: 'drivers_live' // Collection CONGO optimisée pour positions temps réel
 };
 
 import { doc, setDoc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
@@ -101,6 +103,34 @@ export const createUserDocument = async (userId, userData) => {
   }
 };
 
+// Fonction pour obtenir un document driver spécifiquement
+export const getDriverDocument = async (userId) => {
+  try {
+    const driverRef = doc(firestore, COLLECTIONS.DRIVERS, userId);
+    const driverSnap = await getDoc(driverRef);
+    
+    if (driverSnap.exists()) {
+      return driverSnap.data();
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error getting driver document:', error);
+    throw error;
+  }
+};
+
+// Fonction pour vérifier si un utilisateur est un driver
+export const isDriver = async (userId) => {
+  try {
+    const driverData = await getDriverDocument(userId);
+    return driverData !== null;
+  } catch (error) {
+    console.error('Error checking if user is driver:', error);
+    return false;
+  }
+};
+
 export const getUserDocument = async (userId) => {
   try {
     // Essayer d'abord la collection unifiée 'users'
@@ -139,11 +169,11 @@ export const promoteToDriver = async (userId, driverData) => {
   try {
     // Mettre à jour le document principal
     const userRef = doc(firestore, COLLECTIONS.USERS, userId);
-    await updateDoc(userRef, {
+    await setDoc(userRef, {
       userType: 'driver',
       ...driverData,
       updatedAt: new Date().toISOString()
-    });
+    }, { merge: true });
 
     // Créer le document driver
     const driverRef = doc(firestore, COLLECTIONS.DRIVERS, userId);
@@ -173,6 +203,13 @@ export const promoteToDriver = async (userId, driverData) => {
 // Fonction pour vérifier le type d'utilisateur
 export const getUserType = async (userId) => {
   try {
+    // Priorité: vérifier d'abord si l'utilisateur est un driver
+    const driverData = await getDriverDocument(userId);
+    if (driverData) {
+      return 'driver';
+    }
+    
+    // Fallback: utiliser getUserDocument pour les autres cas
     const userData = await getUserDocument(userId);
     return userData?.userType || 'passenger';
   } catch (error) {

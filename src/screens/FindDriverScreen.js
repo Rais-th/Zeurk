@@ -22,8 +22,11 @@ import {
 import { MaterialIcons, Ionicons, FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import MapView, { PROVIDER_GOOGLE, Marker, Polyline } from 'react-native-maps';
 import * as Location from 'expo-location';
+import * as Haptics from 'expo-haptics';
 import { GOOGLE_MAPS_APIKEY } from '@env';
 import { LinearGradient } from 'expo-linear-gradient';
+import { rideMatchingService } from '../services/rideMatchingService';
+import { notificationService } from '../services/notificationService';
 
 const { width, height } = Dimensions.get('window');
 
@@ -150,8 +153,9 @@ const mapStyle = [
   }
 ];
 
-// Données fictives pour le chauffeur
-const driverData = {
+// Données fictives pour le chauffeur (fallback)
+// Updated to fix driverData reference error
+const fallbackDriverData = {
   name: "Anderson",
   rating: 4.9,
   licensePlate: "3M53AF2",
@@ -186,6 +190,15 @@ export default function FindDriverScreen({ route, navigation }) {
   const [isCancelModalVisible, setCancelModalVisible] = useState(false);
   const [rating, setRating] = useState(0);
   const [tip, setTip] = useState(0);
+  
+  // États pour le matching automatique
+  const [rideRequest, setRideRequest] = useState(null);
+  const [assignedDriver, setAssignedDriver] = useState(null);
+  const [matchingError, setMatchingError] = useState(null);
+  const [isMatching, setIsMatching] = useState(false);
+  
+  // Utiliser les données du chauffeur assigné ou les données de fallback
+  const driverData = assignedDriver || fallbackDriverData;
   
   const mapRef = useRef(null);
   const routeIndexRef = useRef(0);
@@ -341,17 +354,17 @@ export default function FindDriverScreen({ route, navigation }) {
   useEffect(() => {
     // Phase 1: Recherche -> Chauffeur trouvé (après 5s)
     const searchTimeout = setTimeout(() => {
-      const PATTERN = [0, 300, 200, 300, 200, 300];
-      Vibration.vibrate(PATTERN);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setFindingState('driverFound');
       
       // Phase 2: Chauffeur trouvé -> Chauffeur arrivé (après 10s)
       const arrivalTimeout = setTimeout(() => {
-        Vibration.vibrate(); // Vibre une fois à l'arrivée
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         setFindingState('driverArrived');
 
         // Phase 3: Chauffeur arrivé -> En course (après 5s)
         const inTripTimeout = setTimeout(() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
           setFindingState('inTrip');
         }, 5000); // 5 secondes
         
@@ -570,6 +583,7 @@ export default function FindDriverScreen({ route, navigation }) {
   });
 
   const handleFinishRating = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     console.log(`Rating: ${rating}, Tip: ${tip}`);
     // Animer la sortie et naviguer
     Animated.timing(ratingPanelAnim, {
@@ -716,13 +730,19 @@ export default function FindDriverScreen({ route, navigation }) {
               <View style={styles.actionButtonsContainer}>
                 <TouchableOpacity 
                   style={styles.actionButton}
-                  onPress={() => navigation.navigate('ChatScreen', { driverData, category })}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    navigation.navigate('ChatScreen', { driverData, category });
+                  }}
                 >
                   <Ionicons name="chatbubble-ellipses-outline" size={26} color="#fff" />
                 </TouchableOpacity>
                 <TouchableOpacity 
                   style={[styles.actionButton, {backgroundColor: 'rgba(255, 107, 107, 0.15)'}]}
-                  onPress={() => setCancelModalVisible(true)}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    setCancelModalVisible(true);
+                  }}
                 >
                   <MaterialIcons name="cancel" size={26} color="#FF6B6B" />
                 </TouchableOpacity>
@@ -858,7 +878,13 @@ export default function FindDriverScreen({ route, navigation }) {
           
           <View style={styles.starsContainer}>
             {[1, 2, 3, 4, 5].map((star) => (
-              <TouchableOpacity key={star} onPress={() => setRating(star)}>
+              <TouchableOpacity 
+                key={star} 
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setRating(star);
+                }}
+              >
                 <Ionicons 
                   name={rating >= star ? "star" : "star-outline"} 
                   size={40} 
@@ -870,33 +896,47 @@ export default function FindDriverScreen({ route, navigation }) {
 
           <View style={styles.divider} />
 
-          <Text style={styles.tipTitle}>Ajouter un pourboire</Text>
-          <View style={styles.tipOptionsContainer}>
-            {[2, 5, 10].map(amount => (
-              <TouchableOpacity 
-                key={amount}
-                style={[styles.tipButton, tip === amount && styles.tipButtonSelected]}
-                onPress={() => setTip(amount)}
-              >
-                <Text style={[styles.tipButtonText, tip === amount && styles.tipButtonTextSelected]}>{amount}€</Text>
-              </TouchableOpacity>
-            ))}
-            <View style={styles.customTipContainer}>
-              <TextInput
-                style={styles.customTipInput}
-                placeholder="Autre"
-                placeholderTextColor="#8E8E93"
-                keyboardType="numeric"
-                onChangeText={(text) => setTip(Number(text))}
-              />
-            </View>
-          </View>
+          <Text style={styles.tipTitle}>Ajouter un pourboire</Text> 
+           <View style={styles.tipOptionsContainer}> 
+             {[2000, 5000, 10000].map(amount => ( 
+               <TouchableOpacity 
+                 key={amount} 
+                 style={[styles.tipButton, tip === amount && styles.tipButtonSelected]} 
+                 onPress={() => {
+                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                   setTip(amount);
+                 }} 
+               > 
+                 <Text style={[styles.tipButtonText, tip === amount && styles.tipButtonTextSelected]}>{amount} FC</Text> 
+               </TouchableOpacity> 
+             ))} 
+             <View style={styles.customTipContainer}> 
+               <TextInput 
+                 style={styles.customTipInput} 
+                 placeholder="Autre" 
+                 placeholderTextColor="#8E8E93" 
+                 keyboardType="numeric" 
+                 onChangeText={(text) => setTip(Number(text))} 
+               /> 
+             </View> 
+           </View>
 
-          <TouchableOpacity style={styles.submitButton} onPress={handleFinishRating}>
+          <TouchableOpacity 
+            style={styles.submitButton} 
+            onPress={() => {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              handleFinishRating();
+            }}
+          >
             <Text style={styles.submitButtonText}>Terminer</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={handleFinishRating}>
+          <TouchableOpacity 
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              handleFinishRating();
+            }}
+          >
             <Text style={styles.notNowText}>Pas maintenant</Text>
           </TouchableOpacity>
 
@@ -916,13 +956,26 @@ export default function FindDriverScreen({ route, navigation }) {
             
             <View style={styles.cancelReasonsContainer}>
               {['Le conducteur met trop de temps', 'J\'ai changé d\'avis', 'Problème de prix', 'Le conducteur a demandé d\'annuler', 'Autre'].map((reason, index) => (
-                <TouchableOpacity key={index} style={styles.reasonButton} onPress={() => handleCancellation(reason)}>
+                <TouchableOpacity 
+                  key={index} 
+                  style={styles.reasonButton} 
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    handleCancellation(reason);
+                  }}
+                >
                   <Text style={styles.reasonButtonText}>{reason}</Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            <TouchableOpacity style={styles.backButtonModal} onPress={() => setCancelModalVisible(false)}>
+            <TouchableOpacity 
+              style={styles.backButtonModal} 
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setCancelModalVisible(false);
+              }}
+            >
               <Text style={styles.backButtonModalText}>Retour</Text>
             </TouchableOpacity>
           </View>

@@ -72,7 +72,7 @@ const AuthScreen = ({ navigation, route }) => {
         }
       } else {
         console.log('🔐 Tentative de connexion...');
-        const { data, error } = await signInWithEmail(email, password);
+        const { data, error } = await signInWithEmail(email, password, 'driver');
         if (error) {
           console.log('❌ Erreur connexion:', error.message);
           setError(`Erreur de connexion: ${error.message}`);

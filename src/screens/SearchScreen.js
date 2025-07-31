@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
+import * as Haptics from 'expo-haptics';
 import { GOOGLE_MAPS_APIKEY } from '@env';
 import { searchLandmarks, getPopularLandmarks } from '../data/landmarks';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
@@ -153,11 +154,7 @@ export default function SearchScreen({ navigation }) {
     
     const expandedQuery = expandedWords.join(' ');
     
-    // Ajouter "Kinshasa" si pas déjà présent pour améliorer la géolocalisation
-    if (!expandedQuery.includes('kinshasa') && !expandedQuery.includes('congo')) {
-      return `${expandedQuery} kinshasa`;
-    }
-    
+    // Ne plus forcer Kinshasa pour permettre la recherche mondiale
     return expandedQuery;
   };
 
@@ -187,9 +184,9 @@ export default function SearchScreen({ navigation }) {
       // Préprocesser la requête pour Google Places
       const processedQuery = preprocessQuery(text);
       
-      // Search Google Places avec la requête améliorée
+      // Search Google Places avec recherche mondiale (plus de restriction géographique)
       const response = await fetch(
-        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(processedQuery)}&components=country:cd&location=-4.4419,15.2663&radius=50000&strictbounds=true&key=${GOOGLE_MAPS_APIKEY}&language=fr`
+        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(processedQuery)}&key=${GOOGLE_MAPS_APIKEY}&language=fr`
       );
       const data = await response.json();
       
@@ -242,7 +239,9 @@ export default function SearchScreen({ navigation }) {
   };
 
   const handleAddStop = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (stops.length >= 2) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert(
         'Maximum atteint',
         'Vous ne pouvez pas ajouter plus de 2 arrêts.',
@@ -254,6 +253,7 @@ export default function SearchScreen({ navigation }) {
   };
 
   const handleRemoveStop = (index) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const newStops = stops.filter((_, i) => i !== index);
     setStops(newStops);
     setStopSuggestions([]);
@@ -267,6 +267,7 @@ export default function SearchScreen({ navigation }) {
   };
 
   const handleSelectPlace = (place, isStart = true, stopIndex = -1) => {
+    Haptics.selectionAsync();
     const address = place.description;
     
     if (isStart) {
@@ -283,6 +284,7 @@ export default function SearchScreen({ navigation }) {
       if (address === startLocation || 
           address === destination || 
           stops.some((stop, i) => i !== stopIndex && stop === address)) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         Alert.alert(
           'Adresse invalide',
           'Chaque arrêt doit avoir une adresse différente.',
@@ -303,6 +305,7 @@ export default function SearchScreen({ navigation }) {
     } else {
       // C'est la destination finale
       if (address === startLocation || stops.includes(address)) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         Alert.alert(
           'Adresse invalide',
           'Le point de départ, les arrêts et la destination doivent être différents.',
@@ -313,6 +316,7 @@ export default function SearchScreen({ navigation }) {
       
       // Vérifier que tous les arrêts sont remplis avant de naviguer
       if (stops.some(stop => !stop)) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         Alert.alert(
           'Arrêts incomplets',
           'Veuillez remplir tous les arrêts avant de sélectionner la destination finale.',
@@ -321,6 +325,7 @@ export default function SearchScreen({ navigation }) {
         return;
       }
 
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setDestination(address);
       setDestinationSuggestions([]);
       setStartSuggestions([]);
@@ -334,6 +339,7 @@ export default function SearchScreen({ navigation }) {
   };
 
   const handleOrderBySMS = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const smsBody = formatSMSBody(startLocation, destination);
     
     Alert.alert(
@@ -344,8 +350,10 @@ export default function SearchScreen({ navigation }) {
         {
           text: 'Ouvrir SMS',
           onPress: () => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             const url = `sms:${SMS_CONFIG.TWILIO_NUMBER}${Platform.OS === 'ios' ? '&' : '?'}body=${encodeURIComponent(smsBody)}`;
             Linking.openURL(url).catch(err => {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
               Alert.alert('Erreur', SMS_CONFIG.MESSAGES.ERROR);
             });
           }
@@ -357,8 +365,12 @@ export default function SearchScreen({ navigation }) {
 
 
   const handleSelectPopularPlace = (place) => {
+    Haptics.selectionAsync();
+    // Utiliser l'adresse complète pour un géocodage réussi
+    const fullAddress = place.address || place.name;
+    
     if (activeInput === 'start') {
-      setStartLocation(place.name);
+      setStartLocation(fullAddress);
       setStartSuggestions([]);
       setDestinationSuggestions([]);
       setActiveInput('destination');
@@ -369,9 +381,10 @@ export default function SearchScreen({ navigation }) {
     } else if (activeInput.startsWith('stop_')) {
       // Gérer la sélection d'un lieu populaire pour un arrêt
       const stopIndex = parseInt(activeInput.split('_')[1]);
-      if (place.name === startLocation || 
-          place.name === destination || 
-          stops.some((stop, i) => i !== stopIndex && stop === place.name)) {
+      if (fullAddress === startLocation || 
+          fullAddress === destination || 
+          stops.some((stop, i) => i !== stopIndex && stop === fullAddress)) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         Alert.alert(
           'Lieu invalide',
           'Chaque arrêt doit avoir une adresse différente.',
@@ -380,11 +393,12 @@ export default function SearchScreen({ navigation }) {
         return;
       }
       const newStops = [...stops];
-      newStops[stopIndex] = place.name;
+      newStops[stopIndex] = fullAddress;
       setStops(newStops);
     } else {
       // C'est la destination finale
-      if (place.name === startLocation || stops.includes(place.name)) {
+      if (fullAddress === startLocation || stops.includes(fullAddress)) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         Alert.alert(
           'Lieu invalide',
           'Le point de départ, les arrêts et la destination doivent être différents.',
@@ -395,6 +409,7 @@ export default function SearchScreen({ navigation }) {
 
       // Vérifier que tous les arrêts sont remplis
       if (stops.some(stop => !stop)) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         Alert.alert(
           'Arrêts incomplets',
           'Veuillez remplir tous les arrêts avant de sélectionner la destination finale.',
@@ -403,14 +418,15 @@ export default function SearchScreen({ navigation }) {
         return;
       }
 
-      setDestination(place.name);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setDestination(fullAddress);
       setDestinationSuggestions([]);
       setStartSuggestions([]);
 
       navigation.navigate('RideOptions', {
         startLocation: startLocation,
         stops: stops,
-        destination: place.name
+        destination: fullAddress
       });
     }
   };
@@ -481,7 +497,10 @@ export default function SearchScreen({ navigation }) {
           {/* Options spéciales */}
           <TouchableOpacity
             style={styles.specialOption}
-            onPress={() => {/* TODO: Implémenter la sélection sur carte */}}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              /* TODO: Implémenter la sélection sur carte */
+            }}
           >
             <MaterialIcons name="map" size={24} color={iconColor} />
             <Text style={styles.specialOptionText}>Choisir sur la carte</Text>
@@ -489,7 +508,10 @@ export default function SearchScreen({ navigation }) {
 
           <TouchableOpacity
             style={styles.specialOption}
-            onPress={() => {/* TODO: Implémenter la géolocalisation */}}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              /* TODO: Implémenter la géolocalisation */
+            }}
           >
             <MaterialIcons name="my-location" size={24} color={iconColor} />
             <Text style={styles.specialOptionText}>Ma localisation</Text>
@@ -497,7 +519,10 @@ export default function SearchScreen({ navigation }) {
 
           <TouchableOpacity
             style={[styles.specialOption, { borderBottomWidth: 0 }]}
-            onPress={() => {/* TODO: Implémenter le signalement d'adresse manquante */}}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              /* TODO: Implémenter le signalement d'adresse manquante */
+            }}
           >
             <MaterialIcons name="add-location" size={24} color={iconColor} />
             <Text style={styles.specialOptionText}>Adresse Manquante</Text>
@@ -545,6 +570,7 @@ export default function SearchScreen({ navigation }) {
         <TouchableOpacity 
           style={styles.backButton}
           onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             // Retourner vers HomeScreen en réinitialisant la pile de navigation
             navigation.reset({
               index: 0,

@@ -436,52 +436,49 @@ const PreferencesScreen = ({ navigation }) => {
             <TouchableOpacity
               style={[
                 styles.classCard,
-                preferredLanguage === 'Lingala' ? styles.classCardSelected : null
+                preferredLanguage === 'English' ? styles.classCardSelected : null
               ]}
-              onPress={() => handleLanguageSelection('Lingala')}
+              onPress={() => handleLanguageSelection('English')}
             >
               <View style={[
                 styles.classContent,
-                preferredLanguage === 'Lingala' && styles.classContentSelected
+                preferredLanguage === 'English' && styles.classContentSelected
               ]}>
                 <Text style={[
                   styles.classCardTitle,
-                  preferredLanguage === 'Lingala' ? styles.classCardTitleSelected : null
+                  preferredLanguage === 'English' ? styles.classCardTitleSelected : null
                 ]}>
-                  Lingala
+                  English
                 </Text>
-                {preferredLanguage === 'Lingala' && (
+                {preferredLanguage === 'English' && (
                   <Text style={styles.classCardDescription}>
-                    Bosalela application na Lingala
+                    Use the application in English
                   </Text>
                 )}
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[
-                styles.classCard,
-                preferredLanguage === 'Swahili' ? styles.classCardSelected : null
-              ]}
-              onPress={() => handleLanguageSelection('Swahili')}
-            >
-              <View style={[
-                styles.classContent,
-                preferredLanguage === 'Swahili' && styles.classContentSelected
-              ]}>
-                <Text style={[
-                  styles.classCardTitle,
-                  preferredLanguage === 'Swahili' ? styles.classCardTitleSelected : null
-                ]}>
+            <View style={[styles.classCard, styles.comingSoonCard]}>
+              <View style={styles.classContent}>
+                <Text style={[styles.classCardTitle, styles.comingSoonTitle]}>
+                  Lingala
+                </Text>
+                <Text style={styles.comingSoonText}>
+                  Coming soon
+                </Text>
+              </View>
+            </View>
+
+            <View style={[styles.classCard, styles.comingSoonCard]}>
+              <View style={styles.classContent}>
+                <Text style={[styles.classCardTitle, styles.comingSoonTitle]}>
                   Swahili
                 </Text>
-                {preferredLanguage === 'Swahili' && (
-                  <Text style={styles.classCardDescription}>
-                    Tumia programu kwa Kiswahili
-                  </Text>
-                )}
+                <Text style={styles.comingSoonText}>
+                  Coming soon
+                </Text>
               </View>
-            </TouchableOpacity>
+            </View>
           </View>
         </Section>
 
@@ -513,6 +510,18 @@ const PreferencesScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
+  comingSoonCard: {
+    opacity: 0.5,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  comingSoonTitle: {
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+  comingSoonText: {
+    color: 'rgba(255, 255, 255, 0.5)',
+    fontSize: 12,
+    marginTop: 4,
+  },
   container: {
     flex: 1,
     backgroundColor: '#000',

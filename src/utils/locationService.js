@@ -1,5 +1,7 @@
 import * as Location from 'expo-location';
 import { GOOGLE_MAPS_APIKEY } from '@env';
+import { firestore, COLLECTIONS } from '../config/firebase';
+import { doc, setDoc, onSnapshot, query, where, collection, serverTimestamp, getDocs, orderBy } from 'firebase/firestore';
 
 /**
  * Enhanced Location Service for Zeurk
@@ -398,6 +400,367 @@ class LocationService {
       data,
       timestamp: Date.now()
     });
+  }
+
+  // ========================================
+  // CONGO OPTIMIZED: Real-time Driver Detection
+  // Lightweight, offline-first, minimal data
+  // ========================================
+
+  /**
+   * DRIVER: Update position in Firebase (Congo optimized)
+   * Minimal data, 30s intervals, compression
+   */
+  async updateDriverPosition(driverId, isAvailable = true) {
+    try {
+      const location = await this.getCurrentLocation({ timeout: 5000 });
+      
+      // MINIMAL data structure for Congo
+      const driverData = {
+        lat: Math.round(location.latitude * 100000) / 100000, // 5 decimals = ~1m precision
+        lng: Math.round(location.longitude * 100000) / 100000,
+        av: isAvailable ? 1 : 0, // available (compressed)
+        ts: serverTimestamp() // timestamp
+      };
+
+      await setDoc(doc(firestore, COLLECTIONS.DRIVERS_LIVE, driverId), driverData);
+      return true;
+    } catch (error) {
+      console.error('Driver position update failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * PASSENGER: Listen to nearby drivers (Congo optimized)
+   * Real-time listener with minimal data transfer
+   */
+  listenToNearbyDrivers(passengerLocation, radiusKm = 5, callback) {
+    try {
+      // Simple query - all available drivers
+      const driversQuery = query(
+        collection(firestore, COLLECTIONS.DRIVERS_LIVE),
+        where('av', '==', 1) // only available drivers
+      );
+
+      const unsubscribe = onSnapshot(driversQuery, (snapshot) => {
+        const nearbyDrivers = [];
+        
+        snapshot.forEach((doc) => {
+          const driver = doc.data();
+          const distance = this.calculateHaversineDistance(
+            passengerLocation.latitude,
+            passengerLocation.longitude,
+            driver.lat,
+            driver.lng
+          );
+
+          // Filter by radius
+          if (distance <= radiusKm) {
+            nearbyDrivers.push({
+              id: doc.id,
+              latitude: driver.lat,
+              longitude: driver.lng,
+              available: driver.av === 1,
+              distance: distance,
+              timestamp: driver.ts
+            });
+          }
+        });
+
+        // Sort by distance
+        nearbyDrivers.sort((a, b) => a.distance - b.distance);
+        callback(nearbyDrivers);
+      });
+
+      return unsubscribe;
+    } catch (error) {
+      console.error('Driver listener failed:', error);
+      callback([]);
+      return () => {}; // Return empty unsubscribe function
+    }
+  }
+
+  /**
+   * DRIVER: Start position tracking (Congo optimized)
+   * 30-second intervals, battery optimized
+   */
+  startDriverTracking(driverId, isAvailable = true) {
+    // Clear any existing interval
+    if (this.driverTrackingInterval) {
+      clearInterval(this.driverTrackingInterval);
+    }
+
+    // Update immediately
+    this.updateDriverPosition(driverId, isAvailable);
+
+    // Then update every 30 seconds (Congo optimized)
+    this.driverTrackingInterval = setInterval(() => {
+      this.updateDriverPosition(driverId, isAvailable);
+    }, 30000); // 30 seconds
+
+    return this.driverTrackingInterval;
+  }
+
+  /**
+   * DRIVER: Stop position tracking
+   */
+  stopDriverTracking(driverId) {
+    if (this.driverTrackingInterval) {
+      clearInterval(this.driverTrackingInterval);
+      this.driverTrackingInterval = null;
+    }
+
+    // Remove from live collection
+    try {
+      setDoc(doc(firestore, COLLECTIONS.DRIVERS_LIVE, driverId), {
+        av: 0, // Set as unavailable
+        ts: serverTimestamp()
+      });
+    } catch (error) {
+      console.error('Failed to stop tracking:', error);
+    }
+  }
+
+  /**
+   * PASSENGER: Get nearest drivers (one-time fetch)
+   * For initial load or manual refresh
+   */
+  async getNearestDrivers(passengerLocation, radiusKm = 5, maxDrivers = 10) {
+    try {
+      const driversQuery = query(
+        collection(firestore, COLLECTIONS.DRIVERS_LIVE),
+        where('av', '==', 1)
+      );
+
+      const snapshot = await getDocs(driversQuery);
+      const nearbyDrivers = [];
+
+      snapshot.forEach((doc) => {
+        const driver = doc.data();
+        const distance = this.calculateHaversineDistance(
+          passengerLocation.latitude,
+          passengerLocation.longitude,
+          driver.lat,
+          driver.lng
+        );
+
+        if (distance <= radiusKm) {
+          nearbyDrivers.push({
+            id: doc.id,
+            lat: driver.lat,
+            lng: driver.lng,
+            latitude: driver.lat,
+            longitude: driver.lng,
+            available: driver.av === 1,
+            distance: distance,
+            timestamp: driver.ts
+          });
+        }
+      });
+
+      return nearbyDrivers
+        .sort((a, b) => a.distance - b.distance)
+        .slice(0, maxDrivers);
+
+    } catch (error) {
+      console.error('Failed to get nearest drivers:', error);
+      return [];
+    }
+  }
+
+  /**
+   * PASSENGER: Get ALL available drivers (for demo mode)
+   * Used when no drivers are found locally
+   */
+  async getAllAvailableDrivers() {
+    try {
+      console.log('🌍 Récupération de TOUS les chauffeurs disponibles...');
+      
+      const driversQuery = query(
+        collection(firestore, COLLECTIONS.DRIVERS_LIVE),
+        where('av', '==', 1)
+      );
+
+      const snapshot = await getDocs(driversQuery);
+      const allDrivers = [];
+
+      snapshot.forEach((doc) => {
+        const driver = doc.data();
+        allDrivers.push({
+          id: doc.id,
+          lat: driver.lat,
+          lng: driver.lng,
+          latitude: driver.lat, // Alias pour compatibilité
+          longitude: driver.lng, // Alias pour compatibilité
+          available: driver.av === 1,
+          distance: 999, // Distance arbitraire pour mode démo
+          timestamp: driver.ts,
+          isDemoMode: true // Marqueur pour indiquer le mode démo
+        });
+      });
+
+      console.log(`✅ ${allDrivers.length} chauffeurs trouvés en mode démo`);
+      return allDrivers;
+
+    } catch (error) {
+      console.error('❌ Échec récupération tous chauffeurs:', error);
+      return [];
+    }
+  }
+
+  /**
+   * PASSENGER: Enhanced real-time listener with optimized performance
+   * Système temps réel amélioré pour une meilleure réactivité
+   */
+  listenToNearbyDriversEnhanced(passengerLocation, radiusKm = 5, callback) {
+    try {
+      console.log(`🚀 Démarrage listener temps réel optimisé (rayon: ${radiusKm}km)`);
+      
+      // Query optimisé pour Firebase avec index sur 'av' et 'ts'
+      const driversQuery = query(
+        collection(firestore, COLLECTIONS.DRIVERS_LIVE),
+        where('av', '==', 1), // Seulement chauffeurs disponibles
+        orderBy('ts', 'desc') // Trier par timestamp pour avoir les plus récents
+      );
+
+      // Cache local pour éviter les recalculs inutiles
+      let lastDriversSnapshot = new Map();
+      let lastUpdateTime = 0;
+
+      const unsubscribe = onSnapshot(driversQuery, (snapshot) => {
+        const currentTime = Date.now();
+        
+        // Éviter les mises à jour trop fréquentes (minimum 2 secondes)
+        if (currentTime - lastUpdateTime < 2000 && snapshot.size === lastDriversSnapshot.size) {
+          return;
+        }
+        
+        const drivers = [];
+        const changes = [];
+        let totalDrivers = 0;
+        
+        snapshot.docChanges().forEach((change) => {
+          const driver = change.doc.data();
+          const driverId = change.doc.id;
+          
+          // Traquer les changements pour optimiser les mises à jour
+          if (change.type === 'added') {
+            changes.push({ type: 'added', id: driverId, data: driver });
+          } else if (change.type === 'modified') {
+            changes.push({ type: 'modified', id: driverId, data: driver });
+          } else if (change.type === 'removed') {
+            changes.push({ type: 'removed', id: driverId });
+          }
+        });
+
+        snapshot.forEach((doc) => {
+          totalDrivers++;
+          const driver = doc.data();
+          const driverId = doc.id;
+          
+          // Vérifier la fraîcheur des données (max 5 minutes)
+          const driverTimestamp = driver.ts?.toDate?.() || new Date(driver.ts);
+          const isStale = (currentTime - driverTimestamp.getTime()) > 300000; // 5 minutes
+          
+          if (isStale) {
+            console.log(`⚠️ Données obsolètes pour ${driverId}: ${Math.round((currentTime - driverTimestamp.getTime()) / 1000)}s`);
+          }
+          
+          // Calculer distance seulement si nécessaire
+          let distance = 0;
+          let includeDriver = true;
+          
+          if (radiusKm < 1000) { // Rayon normal
+            distance = this.calculateHaversineDistance(
+              passengerLocation.latitude,
+              passengerLocation.longitude,
+              driver.lat,
+              driver.lng
+            );
+            includeDriver = distance <= radiusKm;
+          } else {
+            // Mode démo - inclure tous les chauffeurs
+            distance = this.calculateHaversineDistance(
+              passengerLocation.latitude,
+              passengerLocation.longitude,
+              driver.lat,
+              driver.lng
+            );
+            includeDriver = true;
+          }
+
+          if (includeDriver) {
+            drivers.push({
+              id: driverId,
+              lat: driver.lat,
+              lng: driver.lng,
+              latitude: driver.lat,
+              longitude: driver.lng,
+              available: driver.av === 1,
+              distance: Math.round(distance * 100) / 100, // Arrondir à 2 décimales
+              timestamp: driver.ts,
+              isStale: isStale,
+              lastSeen: driverTimestamp,
+              isDemoMode: radiusKm >= 1000,
+              // Données supplémentaires du conducteur
+              name: driver.displayName || driver.name || 'Conducteur',
+              rating: driver.rating || 5,
+              vehicle: driver.vehicle || 'Véhicule',
+              phoneNumber: driver.phoneNumber || ''
+            });
+          }
+        });
+
+        // Trier par distance puis par fraîcheur
+        drivers.sort((a, b) => {
+          if (a.isStale !== b.isStale) {
+            return a.isStale ? 1 : -1; // Conducteurs actifs en premier
+          }
+          return a.distance - b.distance;
+        });
+
+        // Métadonnées pour le callback
+        const metadata = {
+          totalDrivers,
+          nearbyDrivers: drivers.length,
+          changes: changes.length,
+          lastUpdate: currentTime,
+          isDemoMode: radiusKm >= 1000,
+          radius: radiusKm,
+          staleDrivers: drivers.filter(d => d.isStale).length
+        };
+
+        console.log(`🔄 Mise à jour temps réel: ${drivers.length}/${totalDrivers} conducteurs (${changes.length} changements)`);
+        
+        // Mettre à jour le cache
+        lastDriversSnapshot.clear();
+        drivers.forEach(driver => lastDriversSnapshot.set(driver.id, driver));
+        lastUpdateTime = currentTime;
+        
+        callback(drivers, metadata);
+        
+      }, (error) => {
+        console.error('❌ Erreur listener Firebase:', error);
+        
+        // Stratégie de récupération d'erreur
+        if (error.code === 'permission-denied') {
+          console.error('🔒 Permissions Firebase insuffisantes');
+        } else if (error.code === 'unavailable') {
+          console.error('🌐 Service Firebase temporairement indisponible');
+        }
+        
+        callback([], { error: error.message, code: error.code });
+      });
+
+      console.log('✅ Listener temps réel configuré avec succès');
+      return unsubscribe;
+      
+    } catch (error) {
+      console.error('❌ Échec création listener:', error);
+      callback([], { error: error.message });
+      return () => {}; // Fonction vide pour cleanup
+    }
   }
 }
 
