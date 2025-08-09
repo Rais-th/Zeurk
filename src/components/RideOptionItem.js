@@ -1,7 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+<<<<<<< HEAD
 import * as Haptics from 'expo-haptics';
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
 
 const CarIcon = ({ color, icon, isMotorcycle, carImage, isLuxe }) => (
   <View style={styles.carContainer}>
@@ -42,10 +45,14 @@ const RideOptionItem = ({ option, isSelected, onSelect }) => {
   return (
     <TouchableOpacity
       style={styles.optionItem}
+<<<<<<< HEAD
       onPress={() => {
         Haptics.selectionAsync();
         onSelect(option.id);
       }}
+=======
+      onPress={() => onSelect(option.id)}
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
     >
       <View 
         style={[
@@ -237,4 +244,8 @@ const styles = StyleSheet.create({
   rearWheel: {},
 });
 
+<<<<<<< HEAD
 export default React.memo(RideOptionItem);
+=======
+export default React.memo(RideOptionItem); 
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b

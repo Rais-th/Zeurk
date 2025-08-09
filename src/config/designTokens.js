@@ -94,21 +94,33 @@ export const borderRadius = {
 
 export const shadows = {
   sm: {
+<<<<<<< HEAD
     shadowColor: 'rgba(0, 0, 0, 0.3)',
+=======
+    shadowColor: colors.ui.shadow,
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
   },
   base: {
+<<<<<<< HEAD
     shadowColor: 'rgba(0, 0, 0, 0.3)',
+=======
+    shadowColor: colors.ui.shadow,
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
     elevation: 4,
   },
   lg: {
+<<<<<<< HEAD
     shadowColor: 'rgba(0, 0, 0, 0.3)',
+=======
+    shadowColor: colors.ui.shadow,
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -150,4 +162,8 @@ export const animations = {
     easeOut: 'ease-out',
     easeInOut: 'ease-in-out',
   }
+<<<<<<< HEAD
 };
+=======
+}; 
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b

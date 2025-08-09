@@ -86,4 +86,7 @@ yarn-error.log
 
 # Secret environment variables
 .env
+<<<<<<< HEAD
 .vercel
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b

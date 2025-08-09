@@ -15,6 +15,7 @@ export const useVehicleFilters = (vehicles) => {
     // Search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
+<<<<<<< HEAD
       filtered = filtered.filter(vehicle => {
         const titleMatch = vehicle.title && vehicle.title.toLowerCase().includes(query);
         const brandMatch = vehicle.brand && vehicle.brand.toLowerCase().includes(query);
@@ -22,6 +23,14 @@ export const useVehicleFilters = (vehicles) => {
         const locationMatch = vehicle.location && vehicle.location.toLowerCase().includes(query);
         return titleMatch || brandMatch || modelMatch || locationMatch;
       });
+=======
+      filtered = filtered.filter(vehicle =>
+        vehicle.title.toLowerCase().includes(query) ||
+        vehicle.brand.toLowerCase().includes(query) ||
+        vehicle.model.toLowerCase().includes(query) ||
+        vehicle.location.toLowerCase().includes(query)
+      );
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
     }
 
     // Category filter
@@ -119,4 +128,8 @@ export const useVehicleFilters = (vehicles) => {
     getSortDisplayName,
     cycleSortOption,
   };
+<<<<<<< HEAD
 };
+=======
+}; 
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b

@@ -32,7 +32,11 @@ import CategoryFilter from '../components/CategoryFilter';
 import SearchBar from '../components/SearchBar';
 
 // Header Component
+<<<<<<< HEAD
 const MarketplaceHeader = React.memo(({ navigation }) => (
+=======
+const MarketplaceHeader = React.memo(({ navigation, onSellPress }) => (
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
   <View style={styles.header}>
     <TouchableOpacity
       style={styles.headerButton}
@@ -43,9 +47,22 @@ const MarketplaceHeader = React.memo(({ navigation }) => (
       <Ionicons name="chevron-back" size={24} color={colors.text.primary} />
     </TouchableOpacity>
     
+<<<<<<< HEAD
     <Text style={styles.headerTitle}>Marketplace</Text>
     
     <View style={styles.headerButton} />
+=======
+    <Text style={styles.headerTitle}>Marketplace Auto</Text>
+    
+    <TouchableOpacity
+      style={styles.sellButton}
+      onPress={onSellPress}
+      accessibilityRole="button"
+      accessibilityLabel="Vendre un véhicule"
+    >
+      <Ionicons name="add" size={24} color={colors.text.primary} />
+    </TouchableOpacity>
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
   </View>
 ));
 
@@ -231,6 +248,13 @@ export default function VehicleMarketplaceScreen({ navigation }) {
     navigation.navigate('VehicleDetails', { vehicle });
   }, [navigation]);
 
+<<<<<<< HEAD
+=======
+  const handleSellPress = useCallback(() => {
+    navigation.navigate('CreateVehicleListing');
+  }, [navigation]);
+
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
   const openFilters = useCallback(() => {
     setShowFilters(true);
   }, []);
@@ -266,6 +290,10 @@ export default function VehicleMarketplaceScreen({ navigation }) {
       <View style={styles.headerContainer}>
         <MarketplaceHeader 
           navigation={navigation} 
+<<<<<<< HEAD
+=======
+          onSellPress={handleSellPress} 
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
         />
         
         <SearchBar
@@ -341,8 +369,13 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
+<<<<<<< HEAD
     alignItems: 'center',
     justifyContent: 'space-between',
+=======
+    justifyContent: 'space-between',
+    alignItems: 'center',
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
     paddingHorizontal: spacing.lg,
     paddingTop: Platform.OS === 'ios' ? 50 : 20,
     paddingBottom: spacing.md,
@@ -359,7 +392,17 @@ const styles = StyleSheet.create({
     fontSize: typography.size.xxl,
     fontWeight: typography.weight.bold,
     color: colors.text.primary,
+<<<<<<< HEAD
     marginLeft: 0,
+=======
+  },
+  sellButton: {
+    padding: spacing.sm,
+    minWidth: 40,
+    minHeight: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
   },
   resultsHeader: {
     flexDirection: 'row',
@@ -538,4 +581,8 @@ const styles = StyleSheet.create({
     fontSize: typography.size.lg,
     fontWeight: typography.weight.semibold,
   },
+<<<<<<< HEAD
 });
+=======
+}); 
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b

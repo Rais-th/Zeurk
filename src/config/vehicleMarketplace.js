@@ -1,6 +1,9 @@
 // Configuration et données de démonstration pour le marketplace automobile
+<<<<<<< HEAD
 import { colors } from './designTokens';
 
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
 export const vehicleCategories = [
   { id: 'sedan', name: 'Berline', icon: 'car-outline' },
   { id: 'suv', name: 'SUV', icon: 'car-sport-outline' },
@@ -11,11 +14,19 @@ export const vehicleCategories = [
 ];
 
 export const vehicleConditions = [
+<<<<<<< HEAD
   { id: 'new', name: 'Neuf', color: colors.brand.success },
   { id: 'excellent', name: 'Excellent état', color: colors.brand.success },
   { id: 'good', name: 'Bon état', color: colors.brand.warning },
   { id: 'fair', name: 'État correct', color: colors.brand.accent },
   { id: 'poor', name: 'À rénover', color: colors.brand.error },
+=======
+  { id: 'new', name: 'Neuf', color: '#4CAF50' },
+  { id: 'excellent', name: 'Excellent état', color: '#8BC34A' },
+  { id: 'good', name: 'Bon état', color: '#FFC107' },
+  { id: 'fair', name: 'État correct', color: '#FF9800' },
+  { id: 'poor', name: 'À rénover', color: '#F44336' },
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
 ];
 
 export const vehicleFuelTypes = [
@@ -50,6 +61,7 @@ export const transmissionTypes = [
 export const mockVehiclesForSale = [
   {
     id: 'v1',
+<<<<<<< HEAD
     title: 'Toyota Prado 2025',
     brand: 'Toyota',
     model: 'Prado',
@@ -58,11 +70,33 @@ export const mockVehiclesForSale = [
     priceFirstInstallment: 62000, // Première tranche
     priceSecondInstallment: 17000, // Deuxième tranche (calculée automatiquement)
     mileage: 0, // Kilométrage en km
+=======
+    title: 'Toyota Camry 2020',
+    brand: 'Toyota',
+    model: 'Camry',
+    year: 2020,
+    price: 28000000, // Prix en FC (Francs Congolais)
+    priceUSD: 15000,
+    category: 'sedan',
+    condition: 'excellent',
+    fuelType: 'gasoline',
+    transmission: 'automatic',
+    mileage: 45000,
+    location: 'Kinshasa, Gombe',
+    seller: {
+      id: 'seller1',
+      name: 'Jean Mukamba',
+      phone: '+243 978 123 456',
+      rating: 4.7,
+      verified: true,
+    },
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
     images: [
       require('../../assets/cars/white.png'),
       require('../../assets/cars/white.png'),
       require('../../assets/cars/white.png'),
     ],
+<<<<<<< HEAD
     posted: '2024-01-15T10:00:00Z',
     available: true,
     // Spécifications techniques
@@ -97,6 +131,21 @@ export const mockVehiclesForSale = [
     },
     views: 245,
     favorites: 18,
+=======
+    features: [
+      'Climatisation',
+      'Système de navigation',
+      'Bluetooth',
+      'Caméra de recul',
+      'Sièges en cuir',
+      'Toit ouvrant',
+    ],
+    description: 'Véhicule en excellent état, entretien régulier, toutes réparations à jour. Idéal pour VTC ou usage personnel.',
+    posted: '2024-01-15T10:00:00Z',
+    views: 127,
+    favorites: 8,
+    available: true,
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
   },
   {
     id: 'v2',
@@ -104,14 +153,33 @@ export const mockVehiclesForSale = [
     brand: 'Hyundai',
     model: 'H1',
     year: 2018,
+<<<<<<< HEAD
     price: 18500, // Prix total en USD
     priceFirstInstallment: 12000, // Première tranche
     priceSecondInstallment: 6500, // Deuxième tranche
     mileage: 78000, // Kilométrage en km
+=======
+    price: 35000000,
+    priceUSD: 18500,
+    category: 'minibus',
+    condition: 'good',
+    fuelType: 'diesel',
+    transmission: 'manual',
+    mileage: 78000,
+    location: 'Kinshasa, Lemba',
+    seller: {
+      id: 'seller2',
+      name: 'Marie Kasongo',
+      phone: '+243 898 765 432',
+      rating: 4.9,
+      verified: true,
+    },
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
     images: [
       require('../../assets/cars/white.png'),
       require('../../assets/cars/white.png'),
     ],
+<<<<<<< HEAD
     posted: '2024-01-12T14:30:00Z',
     available: true,
     specifications: {
@@ -142,6 +210,19 @@ export const mockVehiclesForSale = [
     },
     views: 156,
     favorites: 12,
+=======
+    features: [
+      '12 places',
+      'Climatisation',
+      'Radio/CD',
+      'Vitres électriques',
+    ],
+    description: 'Minibus parfait pour transport public ou familial. Moteur diesel économique, bien entretenu.',
+    posted: '2024-01-12T14:30:00Z',
+    views: 89,
+    favorites: 12,
+    available: true,
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
   },
   {
     id: 'v3',
@@ -149,15 +230,34 @@ export const mockVehiclesForSale = [
     brand: 'Mercedes-Benz',
     model: 'Classe G',
     year: 2019,
+<<<<<<< HEAD
     price: 45000, // Prix total en USD
     priceFirstInstallment: 30000, // Première tranche
     priceSecondInstallment: 15000, // Deuxième tranche
     mileage: 25000, // Kilométrage en km
+=======
+    price: 85000000,
+    priceUSD: 45000,
+    category: 'luxury',
+    condition: 'excellent',
+    fuelType: 'gasoline',
+    transmission: 'automatic',
+    mileage: 25000,
+    location: 'Kinshasa, Gombe',
+    seller: {
+      id: 'seller3',
+      name: 'Patrick Tshisekedi',
+      phone: '+243 971 234 567',
+      rating: 5.0,
+      verified: true,
+    },
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
     images: [
       require('../../assets/cars/luxe.png'),
       require('../../assets/cars/luxe.png'),
       require('../../assets/cars/luxe.png'),
     ],
+<<<<<<< HEAD
     posted: '2024-01-10T09:15:00Z',
     available: true,
     specifications: {
@@ -189,6 +289,22 @@ export const mockVehiclesForSale = [
     },
     views: 189,
     favorites: 25,
+=======
+    features: [
+      'Intérieur cuir premium',
+      'Système multimédia avancé',
+      'Caméras 360°',
+      'Sièges chauffants',
+      'Suspension pneumatique',
+      'Toit panoramique',
+      'Système de navigation premium',
+    ],
+    description: 'Véhicule de luxe en parfait état, peu roulé, entretien Mercedes officiel. Idéal pour services VIP.',
+    posted: '2024-01-10T09:15:00Z',
+    views: 203,
+    favorites: 25,
+    available: true,
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
   },
   {
     id: 'v4',
@@ -196,14 +312,33 @@ export const mockVehiclesForSale = [
     brand: 'Yamaha',
     model: 'DT 125',
     year: 2021,
+<<<<<<< HEAD
     price: 1850, // Prix total en USD
     priceFirstInstallment: 1200, // Première tranche
     priceSecondInstallment: 650, // Deuxième tranche
     mileage: 8000, // Kilométrage en km
+=======
+    price: 3500000,
+    priceUSD: 1850,
+    category: 'motorcycle',
+    condition: 'excellent',
+    fuelType: 'gasoline',
+    transmission: 'manual',
+    mileage: 8000,
+    location: 'Kinshasa, Matonge',
+    seller: {
+      id: 'seller4',
+      name: 'André Kabila',
+      phone: '+243 978 456 789',
+      rating: 4.5,
+      verified: false,
+    },
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
     images: [
       require('../../assets/cars/motorbike.png'),
       require('../../assets/cars/motorbike.png'),
     ],
+<<<<<<< HEAD
     posted: '2024-01-08T16:45:00Z',
     available: true,
     specifications: {
@@ -233,6 +368,19 @@ export const mockVehiclesForSale = [
     },
     views: 98,
     favorites: 8,
+=======
+    features: [
+      'Moteur 125cc',
+      'Démarrage électrique',
+      'Coffre arrière',
+      'Phares LED',
+    ],
+    description: 'Moto parfaite pour livraisons rapides ou transport personnel. Très économique en carburant.',
+    posted: '2024-01-08T16:45:00Z',
+    views: 156,
+    favorites: 18,
+    available: true,
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
   },
   {
     id: 'v5',
@@ -240,15 +388,34 @@ export const mockVehiclesForSale = [
     brand: 'Toyota',
     model: 'RAV4',
     year: 2022,
+<<<<<<< HEAD
     price: 24000, // Prix total en USD
     priceFirstInstallment: 16000, // Première tranche
     priceSecondInstallment: 8000, // Deuxième tranche
     mileage: 5000, // Kilométrage en km
+=======
+    price: 45000000,
+    priceUSD: 24000,
+    category: 'suv',
+    condition: 'new',
+    fuelType: 'hybrid',
+    transmission: 'automatic',
+    mileage: 5000,
+    location: 'Kinshasa, Ngaliema',
+    seller: {
+      id: 'seller5',
+      name: 'Sophie Mbuyi',
+      phone: '+243 898 123 789',
+      rating: 4.8,
+      verified: true,
+    },
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
     images: [
       require('../../assets/cars/bluecars.png'),
       require('../../assets/cars/bluecars.png'),
       require('../../assets/cars/bluecars.png'),
     ],
+<<<<<<< HEAD
     posted: '2024-01-05T11:20:00Z',
     available: true,
     specifications: {
@@ -280,22 +447,44 @@ export const mockVehiclesForSale = [
     },
     views: 134,
     favorites: 15,
+=======
+    features: [
+      'Moteur hybride',
+      'Système Toyota Safety',
+      'Écran tactile 9 pouces',
+      'Apple CarPlay/Android Auto',
+      'Caméras multiples',
+      'Sièges chauffants',
+    ],
+    description: 'SUV hybride quasi-neuf, technologie de pointe, très économique. Garantie constructeur valide.',
+    posted: '2024-01-05T11:20:00Z',
+    views: 301,
+    favorites: 42,
+    available: true,
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
   },
 ];
 
 // Fonctions utilitaires
 export const formatPrice = (price) => {
+<<<<<<< HEAD
   if (price == null || price === undefined) return '0 FC';
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
   return price.toLocaleString('fr-CD') + ' FC';
 };
 
 export const formatPriceUSD = (priceUSD) => {
+<<<<<<< HEAD
   if (priceUSD == null || priceUSD === undefined) return '$0';
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
   return '$' + priceUSD.toLocaleString('en-US');
 };
 
 export const getConditionColor = (conditionId) => {
   const condition = vehicleConditions.find(c => c.id === conditionId);
+<<<<<<< HEAD
   return condition ? condition.color : colors.text.secondary;
 };
 
@@ -306,6 +495,9 @@ export const getConditionStyle = (conditionId) => {
     borderColor: `${color}40`, // 40% opacity border
     color: color,
   };
+=======
+  return condition ? condition.color : '#8E8E93';
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
 };
 
 export const getCategoryName = (categoryId) => {
@@ -339,6 +531,7 @@ export const calculateDaysAgo = (dateString) => {
   if (diffDays < 7) return `Il y a ${diffDays} jours`;
   if (diffDays < 30) return `Il y a ${Math.floor(diffDays / 7)} semaines`;
   return `Il y a ${Math.floor(diffDays / 30)} mois`;
+<<<<<<< HEAD
 };
 
 // UI Styles conformes aux standards de design
@@ -500,3 +693,6 @@ export const vehicleMarketplaceStyles = {
     fontWeight: '500',
   },
 };
+=======
+}; 
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b

@@ -7,7 +7,10 @@ import {
   FlatList,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+<<<<<<< HEAD
 import * as Haptics from 'expo-haptics';
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
 import { colors, typography, spacing, borderRadius } from '../config/designTokens';
 
 const CategoryChip = memo(({ category, isSelected, onPress }) => (
@@ -16,10 +19,14 @@ const CategoryChip = memo(({ category, isSelected, onPress }) => (
       styles.chip,
       isSelected && styles.selectedChip
     ]}
+<<<<<<< HEAD
     onPress={() => {
       Haptics.selectionAsync();
       onPress(category.id);
     }}
+=======
+    onPress={() => onPress(category.id)}
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
     activeOpacity={0.7}
     accessibilityRole="button"
     accessibilityLabel={`Filtrer par ${category.name}`}
@@ -80,6 +87,7 @@ CategoryFilter.displayName = 'CategoryFilter';
 
 const styles = StyleSheet.create({
   container: {
+<<<<<<< HEAD
     backgroundColor: colors.background.primary,
     borderBottomWidth: 1,
     borderBottomColor: colors.ui.border,
@@ -88,6 +96,12 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     paddingHorizontal: 0,
+=======
+    paddingVertical: spacing.sm,
+  },
+  listContainer: {
+    paddingHorizontal: spacing.lg,
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
   },
   separator: {
     width: spacing.sm,
@@ -110,8 +124,12 @@ const styles = StyleSheet.create({
   chipText: {
     color: colors.text.secondary,
     fontSize: typography.size.sm,
+<<<<<<< HEAD
     fontWeight: typography.weight.semibold,
     letterSpacing: 0.3,
+=======
+    fontWeight: typography.weight.medium,
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
   },
   selectedChipText: {
     color: colors.text.primary,
@@ -119,4 +137,8 @@ const styles = StyleSheet.create({
   },
 });
 
+<<<<<<< HEAD
 export default CategoryFilter;
+=======
+export default CategoryFilter; 
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b

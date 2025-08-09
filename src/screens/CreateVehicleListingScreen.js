@@ -58,7 +58,11 @@ export default function CreateVehicleListingScreen({ navigation }) {
       mediaTypes: ImagePicker.MediaType.Images,
       allowsEditing: true,
       aspect: [4, 3],
+<<<<<<< HEAD
       quality: 1.0,
+=======
+      quality: 0.8,
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
     });
 
     if (!result.canceled) {
@@ -532,4 +536,8 @@ const styles = StyleSheet.create({
     fontWeight: typography.weight.semibold,
     color: colors.text.primary,
   },
+<<<<<<< HEAD
 });
+=======
+}); 
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b

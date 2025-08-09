@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+<<<<<<< HEAD
 import {
   View,
   Text,
@@ -16,6 +17,15 @@ import * as Haptics from 'expo-haptics';
 import { useAuth } from '../contexts/AuthContext';
 import { driverTokenService } from '../services/driverTokenService';
 import { getUserType, promoteToDriver } from '../config/firebase';
+=======
+import { StyleSheet, Text, View, TouchableOpacity, TextInput, ScrollView, Platform, Alert } from 'react-native';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
+import * as Location from 'expo-location';
+import * as Haptics from 'expo-haptics';
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
 
 const mapStyle = [
   {
@@ -140,11 +150,17 @@ const mapStyle = [
 ];
 
 export default function HomeScreen({ navigation }) {
+<<<<<<< HEAD
   const { user } = useAuth();
   const [userLocation, setUserLocation] = useState(null);
   const [userCity, setUserCity] = useState('...');
   const [userName, setUserName] = useState('Rais');
   const [isRegisteredDriver, setIsRegisteredDriver] = useState(false);
+=======
+  const [userLocation, setUserLocation] = useState(null);
+  const [userCity, setUserCity] = useState('...');
+  const [userName, setUserName] = useState('Rais');
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
   const [mapRegion, setMapRegion] = useState({
     latitude: -4.4419,
     longitude: 15.2663,
@@ -152,6 +168,7 @@ export default function HomeScreen({ navigation }) {
     longitudeDelta: 0.04,
   });
 
+<<<<<<< HEAD
   const handleDrivePress = async () => {
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -273,6 +290,11 @@ export default function HomeScreen({ navigation }) {
       setIsRegisteredDriver(false);
     }
   };
+=======
+  useEffect(() => {
+    getCurrentLocation();
+  }, []);
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
 
   const getCurrentLocation = async () => {
     try {
@@ -354,7 +376,11 @@ export default function HomeScreen({ navigation }) {
         end={{ x: 1, y: 1 }}
         style={[styles.gradientOverlay, { opacity: 0.5 }]}
       />
+<<<<<<< HEAD
       <View style={[styles.blurOverlay, { opacity: 0.3 }]} />
+=======
+      <BlurView intensity={20} style={[styles.blurOverlay, { opacity: 0.3 }]} />
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
 
       {/* Header minimal avec localisation */}
       <View style={styles.topHeader}>
@@ -373,6 +399,7 @@ export default function HomeScreen({ navigation }) {
       <View style={styles.searchContainer}>
         <TouchableOpacity 
           style={styles.searchBar}
+<<<<<<< HEAD
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             
@@ -385,6 +412,9 @@ export default function HomeScreen({ navigation }) {
               navigation.navigate('PassengerAuth');
             }
           }}
+=======
+          onPress={() => navigation.navigate('Search')}
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
         >
           <Ionicons name="search" size={24} color="#000" style={{ marginRight: 15, opacity: 0.8 }}/>
           <Text style={styles.searchText}>Où allez-vous ?</Text>
@@ -419,8 +449,11 @@ export default function HomeScreen({ navigation }) {
             <Ionicons name="time" size={18} color="#fff" />
             <Text style={styles.quickButtonText}>Planifier</Text>
           </TouchableOpacity>
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
         </View>
       </View>
 
@@ -428,6 +461,7 @@ export default function HomeScreen({ navigation }) {
       <View style={styles.bottomPanel}>
         <View style={styles.rideButtons}>
           <TouchableOpacity style={[styles.rideType, styles.activeRideType]}>
+<<<<<<< HEAD
             <View style={styles.rideTypeContent}>
               <Ionicons name="car" size={20} color="#0A84FF" />
               <Text style={[styles.rideTypeText, { color: '#0A84FF' }]}>Course</Text>
@@ -469,6 +503,26 @@ export default function HomeScreen({ navigation }) {
               <Ionicons name="person" size={20} color="rgba(255, 255, 255, 0.7)" />
               <Text style={[styles.rideTypeText, { color: 'rgba(255, 255, 255, 0.7)' }]}>Profil</Text>
             </View>
+=======
+            <Ionicons name="car" size={20} color="#0A84FF" />
+            <Text style={[styles.rideTypeText, { color: '#0A84FF' }]}>Course</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.rideType}
+            onPress={() => navigation.navigate('VehicleMarketplace')}
+          >
+            <Ionicons name="car-sport" size={20} color="rgba(255, 255, 255, 0.7)" />
+            <Text style={[styles.rideTypeText, { color: 'rgba(255, 255, 255, 0.7)' }]}>Auto</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.rideType}
+            onPress={() => navigation.navigate('DriverDashboard')}
+          >
+            <Ionicons name="speedometer" size={20} color="rgba(255, 255, 255, 0.7)" />
+            <Text style={[styles.rideTypeText, { color: 'rgba(255, 255, 255, 0.7)' }]}>Drive</Text>
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
           </TouchableOpacity>
         </View>
       </View>
@@ -646,9 +700,15 @@ const styles = StyleSheet.create({
     left: 0,
     right: -13,
     backgroundColor: '#000',
+<<<<<<< HEAD
     paddingTop: 20,
     paddingBottom: 35,
     paddingHorizontal: 20,
+=======
+    paddingTop: 15,
+    paddingBottom: 32,
+    paddingHorizontal: 22,
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
     borderTopLeftRadius: 30,
     borderTopRightRadius: 50,
     zIndex: 1001,
@@ -676,6 +736,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   rideType: {
+<<<<<<< HEAD
     flexDirection: 'column',
     alignItems: 'center',
     paddingHorizontal: 12,
@@ -685,6 +746,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     margin: 2,
     minHeight: 60,
+=======
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+    borderRadius: 16,
+    flex: 1,
+    justifyContent: 'center',
+    margin: 3,
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
   },
   activeRideType: {
     backgroundColor: 'rgba(10, 132, 255, 0.1)',
@@ -705,6 +776,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(10, 132, 255, 0.3)',
   },
+<<<<<<< HEAD
   rideTypeContent: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -715,8 +787,18 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 6,
     textAlign: 'center',
+=======
+  rideTypeText: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginLeft: 6,
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
 
+<<<<<<< HEAD
 });
+=======
+}); 
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b

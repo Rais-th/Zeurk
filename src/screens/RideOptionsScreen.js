@@ -15,11 +15,15 @@ import {
   Easing,
   Modal,
   Switch,
+<<<<<<< HEAD
   ActivityIndicator,
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
 } from 'react-native';
 import { MaterialIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import MapView, { PROVIDER_GOOGLE, Marker, Polyline } from 'react-native-maps';
 import * as Location from 'expo-location';
+<<<<<<< HEAD
 import * as Haptics from 'expo-haptics';
 import { GOOGLE_MAPS_APIKEY } from '@env';
 import RideOptionItem from '../components/RideOptionItem';
@@ -27,6 +31,10 @@ import locationService from '../utils/locationService';
 import { getConfig, shouldEnableDemoMode, devLog, getMessages, isRealDriver } from '../config/productionConfig';
 import rideMatchingService from '../services/rideMatchingService';
 import { notificationService } from '../services/notificationService';
+=======
+import { GOOGLE_MAPS_APIKEY } from '@env';
+import RideOptionItem from '../components/RideOptionItem';
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
 
 const { width, height } = Dimensions.get('window');
 const MENU_HEIGHT = height * 0.61;
@@ -235,6 +243,7 @@ const mapStyle = [
   }
 ];
 
+<<<<<<< HEAD
 //INVESTOR DEMO: Function to generate demo drivers for presentation
 const generateDemoDrivers = (centerLocation) => {
   const demoDrivers = [
@@ -309,6 +318,8 @@ const generateDemoDrivers = (centerLocation) => {
   return demoDrivers;
 };
 
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
 const LuxePreferencesModal = ({ visible, onClose, onConfirm }) => {
   const [temperature, setTemperature] = useState('no_preference');
   const [quietRide, setQuietRide] = useState(false);
@@ -316,7 +327,10 @@ const LuxePreferencesModal = ({ visible, onClose, onConfirm }) => {
   const [securityGuard, setSecurityGuard] = useState(false);
 
   const handleTemperatureToggle = () => {
+<<<<<<< HEAD
     Haptics.selectionAsync();
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
     // Basculer entre les trois options: no_preference -> cold -> ambient -> external
     if (temperature === 'no_preference') {
       setTemperature('cold');
@@ -356,7 +370,10 @@ const LuxePreferencesModal = ({ visible, onClose, onConfirm }) => {
   };
 
   const handleConfirm = () => {
+<<<<<<< HEAD
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
     // Collecter les préférences
     const preferences = {
       temperature,
@@ -379,10 +396,14 @@ const LuxePreferencesModal = ({ visible, onClose, onConfirm }) => {
       <TouchableOpacity 
         style={styles.modalOverlay}
         activeOpacity={1}
+<<<<<<< HEAD
         onPress={() => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           onClose();
         }}
+=======
+        onPress={onClose}
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
       >
         <TouchableOpacity 
           style={styles.modalContent}
@@ -391,6 +412,7 @@ const LuxePreferencesModal = ({ visible, onClose, onConfirm }) => {
         >
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Personnaliser votre trajet</Text>
+<<<<<<< HEAD
             <TouchableOpacity 
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -398,11 +420,18 @@ const LuxePreferencesModal = ({ visible, onClose, onConfirm }) => {
               }} 
               style={styles.closeButton}
             >
+=======
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
               <Ionicons name="close" size={24} color="#fff" />
             </TouchableOpacity>
           </View>
           
+<<<<<<< HEAD
           <Text style={styles.modalSubtitle}>Nous informerons votre conducteur de vos préférences.</Text>
+=======
+          <Text style={styles.modalSubtitle}>Nous informerons votre chauffeur de vos préférences.</Text>
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
           
           <View style={styles.preferenceSection}>
             <TouchableOpacity 
@@ -423,10 +452,14 @@ const LuxePreferencesModal = ({ visible, onClose, onConfirm }) => {
               <Text style={styles.preferenceText}>Trajet silencieux</Text>
               <Switch
                 value={quietRide}
+<<<<<<< HEAD
                 onValueChange={(value) => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   setQuietRide(value);
                 }}
+=======
+                onValueChange={setQuietRide}
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
                 trackColor={{ false: '#3e3e3e', true: '#B76E2D' }}
                 thumbColor={quietRide ? '#fff' : '#f4f3f4'}
               />
@@ -439,10 +472,14 @@ const LuxePreferencesModal = ({ visible, onClose, onConfirm }) => {
               <Text style={styles.preferenceText}>Aide avec les bagages</Text>
               <Switch
                 value={helpWithBags}
+<<<<<<< HEAD
                 onValueChange={(value) => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   setHelpWithBags(value);
                 }}
+=======
+                onValueChange={setHelpWithBags}
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
                 trackColor={{ false: '#3e3e3e', true: '#B76E2D' }}
                 thumbColor={helpWithBags ? '#fff' : '#f4f3f4'}
               />
@@ -455,10 +492,14 @@ const LuxePreferencesModal = ({ visible, onClose, onConfirm }) => {
               <Text style={styles.preferenceText}>Garde rapprochée</Text>
               <Switch
                 value={securityGuard}
+<<<<<<< HEAD
                 onValueChange={(value) => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   setSecurityGuard(value);
                 }}
+=======
+                onValueChange={setSecurityGuard}
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
                 trackColor={{ false: '#3e3e3e', true: '#B76E2D' }}
                 thumbColor={securityGuard ? '#fff' : '#f4f3f4'}
               />
@@ -467,7 +508,11 @@ const LuxePreferencesModal = ({ visible, onClose, onConfirm }) => {
             {securityGuard && (
               <View style={styles.securityNoteContainer}>
                 <Text style={styles.securityNoteText}>
+<<<<<<< HEAD
                   Le conducteur sera informé que vous voyagez avec une sécurité personnelle et prévoira l'espace nécessaire.
+=======
+                  Le chauffeur sera informé que vous voyagez avec une sécurité personnelle et prévoira l'espace nécessaire.
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
                 </Text>
               </View>
             )}
@@ -494,6 +539,7 @@ export default function RideOptionsScreen({ route, navigation }) {
   const [isLoadingRoute, setIsLoadingRoute] = useState(true);
   const [trafficColor, setTrafficColor] = useState('#06D6A0'); // Default color for light traffic
   
+<<<<<<< HEAD
   // CONGO: Driver detection states - COMMENTED OUT FOR INVESTOR DEMO
   // const [nearbyDrivers, setNearbyDrivers] = useState([]);
   // const [isLoadingDrivers, setIsLoadingDrivers] = useState(false);
@@ -517,6 +563,8 @@ export default function RideOptionsScreen({ route, navigation }) {
   const [nearbyDrivers, setNearbyDrivers] = useState([]);
   const [connectionStatus, setConnectionStatus] = useState('connected'); // Always show connected for demo
   
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
   const [startCoordinates, setStartCoordinates] = useState(null);
   const [stopCoordinates, setStopCoordinates] = useState([]);
   const [destinationCoordinates, setDestinationCoordinates] = useState(null);
@@ -538,21 +586,30 @@ export default function RideOptionsScreen({ route, navigation }) {
   const markerAnimation = useRef(new Animated.Value(0)).current;
 
   const [showLuxePreferences, setShowLuxePreferences] = useState(false);
+<<<<<<< HEAD
   
   // INVESTOR DEMO: Removed unused state variables
   // const [selectedDriverId, setSelectedDriverId] = useState(null);
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
 
   const filteredOptions = useMemo(() => {
     return rideOptions.filter(option => option.category === selectedCategory);
   }, [selectedCategory]);
 
   const handleOptionSelect = useCallback((optionId) => {
+<<<<<<< HEAD
     Haptics.selectionAsync();
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
     setSelectedOption(optionId);
   }, []);
 
   const handleCategoryChange = useCallback((category) => {
+<<<<<<< HEAD
     Haptics.selectionAsync();
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
     setSelectedCategory(category);
     const defaultOption = category === 'standard' ? 'priority' : 'priority_luxe';
     setSelectedOption(defaultOption);
@@ -573,7 +630,11 @@ export default function RideOptionsScreen({ route, navigation }) {
       }
 
       const response = await fetch(
+<<<<<<< HEAD
         `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${GOOGLE_MAPS_APIKEY}`
+=======
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&components=country:CD&key=${GOOGLE_MAPS_APIKEY}`
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
       );
       const data = await response.json();
       
@@ -686,6 +747,7 @@ export default function RideOptionsScreen({ route, navigation }) {
     return 0;
   }, []);
 
+<<<<<<< HEAD
   // ========================================
   // TEMPS RÉEL: Fonctions de Communication Bidirectionnelle
   // ========================================
@@ -787,6 +849,8 @@ export default function RideOptionsScreen({ route, navigation }) {
     };
   }, []);
 
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
   useEffect(() => {
     let isMounted = true;
     
@@ -814,7 +878,10 @@ export default function RideOptionsScreen({ route, navigation }) {
         const destCoords = restCoords.pop();
         const stopCoords = restCoords;
 
+<<<<<<< HEAD
         console.log('📍 Setting startCoordinates:', startCoords);
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
         setStartCoordinates(startCoords);
         setStopCoordinates(stopCoords);
         setDestinationCoordinates(destCoords);
@@ -868,6 +935,7 @@ export default function RideOptionsScreen({ route, navigation }) {
     };
   }, [startLocation, stops, destination, geocodeAddress, getDirectionsWithStops, calculateMapRegionForAllPoints]);
 
+<<<<<<< HEAD
   // ========================================
   // CONGO: Enhanced Driver Detection with Real-Time Communication - COMMENTED OUT FOR INVESTOR DEMO
   // ========================================
@@ -973,6 +1041,8 @@ export default function RideOptionsScreen({ route, navigation }) {
     // };
   }, [startCoordinates, initializePassengerPosition]);
 
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
   useEffect(() => {
     if (travelDuration !== null) {
       const selected = filteredOptions.find(opt => opt.id === selectedOption);
@@ -1046,6 +1116,7 @@ export default function RideOptionsScreen({ route, navigation }) {
     return unsubscribe;
   }, [navigation, route.params?.selectedPayment]);
 
+<<<<<<< HEAD
   // MATCHING AUTOMATIQUE: Nettoyage des écouteurs - REMOVED FOR INVESTOR DEMO
   // useEffect(() => {
   //   return () => {
@@ -1057,6 +1128,8 @@ export default function RideOptionsScreen({ route, navigation }) {
   //   };
   // }, [rideRequest]);
 
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
   const getPaymentDisplay = useCallback(() => {
     if (!selectedPayment) return "Choisir le mode de paiement";
     return selectedPayment.type;
@@ -1084,8 +1157,13 @@ export default function RideOptionsScreen({ route, navigation }) {
     
     const selectedRide = filteredOptions.find(opt => opt.id === selectedOption);
     
+<<<<<<< HEAD
     // Naviguer directement vers ConfirmPickupScreen avec les préférences luxe
       navigation.navigate('ConfirmPickup', {
+=======
+    // Naviguer vers l'écran de confirmation du point de départ avec les préférences
+    navigation.navigate('ConfirmPickup', {
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
       ride: selectedRide,
       startLocation,
       destination,
@@ -1096,18 +1174,25 @@ export default function RideOptionsScreen({ route, navigation }) {
     });
   };
 
+<<<<<<< HEAD
   // REMOVED FOR INVESTOR DEMO: All matching functions removed as navigation goes directly to ConfirmPickupScreen
 
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
       
         <TouchableOpacity 
         style={styles.headerPill}
+<<<<<<< HEAD
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             navigation.goBack();
           }}
+=======
+          onPress={() => navigation.goBack()}
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
         activeOpacity={0.7}
       >
         <Ionicons name="arrow-back" size={18} color="#fff" style={styles.backIcon} />
@@ -1172,6 +1257,7 @@ export default function RideOptionsScreen({ route, navigation }) {
             </Animated.View>
           </Marker>
         )}
+<<<<<<< HEAD
 
         {/* CONGO: Driver markers - COMMENTED OUT FOR INVESTOR DEMO - Car UI not needed */}
         {/* {nearbyDrivers.map((driver) => {
@@ -1227,6 +1313,8 @@ export default function RideOptionsScreen({ route, navigation }) {
             </View>
           </Marker>
         )} */}
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
       </MapView>
 
       {isLoadingRoute && (
@@ -1235,6 +1323,7 @@ export default function RideOptionsScreen({ route, navigation }) {
         </View>
       )}
 
+<<<<<<< HEAD
       {/* REMOVED FOR INVESTOR DEMO - Driver search UI not needed
       {isLoadingDrivers && (
         <View style={styles.driversLoadingOverlay}>
@@ -1280,6 +1369,8 @@ export default function RideOptionsScreen({ route, navigation }) {
 
       {/* REMOVED FOR INVESTOR DEMO: All matching UI sections removed */}
 
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
       <Animated.View style={[styles.menuContainer, { transform: [{ translateY }] }]}>
         <View style={styles.dragHandle} {...panResponder.panHandlers}>
           <View style={styles.dragIndicator} />
@@ -1315,6 +1406,7 @@ export default function RideOptionsScreen({ route, navigation }) {
           <View style={styles.paymentSection}>
             <TouchableOpacity 
               style={styles.paymentMethod}
+<<<<<<< HEAD
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                 navigation.navigate('Payment', {
@@ -1327,6 +1419,17 @@ export default function RideOptionsScreen({ route, navigation }) {
                   onSelect: (payment) => setSelectedPayment(payment)
                 });
               }}
+=======
+              onPress={() => navigation.navigate('Payment', {
+                selectedRide: filteredOptions.find(opt => opt.id === selectedOption),
+                startLocation,
+                destination,
+                arrivalTime,
+                category: selectedCategory,
+                currentPayment: selectedPayment,
+                onSelect: (payment) => setSelectedPayment(payment)
+              })}
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
             >
               <View style={styles.paymentLeft}>
                 <View style={[styles.paymentIcon, { backgroundColor: getPaymentColor() }]}>
@@ -1337,20 +1440,34 @@ export default function RideOptionsScreen({ route, navigation }) {
               <Ionicons name="chevron-forward" size={20} color="#8E8E93" />
             </TouchableOpacity>
             
+<<<<<<< HEAD
 
+=======
+            <TouchableOpacity style={styles.scheduleButton}>
+              <MaterialIcons name="schedule" size={20} color="#fff" />
+              <Text style={styles.scheduleText}>Planifier</Text>
+            </TouchableOpacity>
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
           </View>
 
           <TouchableOpacity 
             style={[styles.confirmButton, selectedCategory === 'standard' ? styles.confirmButtonStandard : styles.confirmButtonLuxe]}
             onPress={() => {
+<<<<<<< HEAD
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
               const selectedRide = filteredOptions.find(opt => opt.id === selectedOption);
               
               if (selectedCategory === 'luxe') {
                 setShowLuxePreferences(true);
               } else {
+<<<<<<< HEAD
                 // Naviguer directement vers ConfirmPickupScreen
       navigation.navigate('ConfirmPickup', {
+=======
+                navigation.navigate('ConfirmPickup', {
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
                   ride: selectedRide,
                   startLocation,
                   destination,
@@ -1479,7 +1596,23 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
   },
+<<<<<<< HEAD
 
+=======
+  scheduleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#333',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  scheduleText: {
+    color: '#fff',
+    fontSize: 14,
+    marginLeft: 4,
+  },
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
   confirmButton: {
     width: '100%',
     paddingVertical: 16,
@@ -1737,6 +1870,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontStyle: 'italic',
   },
+<<<<<<< HEAD
   // CONGO: Driver marker styles with Real-Time Communication
   driverMarker: {
     width: 32,
@@ -2007,3 +2141,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+=======
+}); 
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b

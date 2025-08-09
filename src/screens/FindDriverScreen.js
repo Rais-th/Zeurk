@@ -22,11 +22,16 @@ import {
 import { MaterialIcons, Ionicons, FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import MapView, { PROVIDER_GOOGLE, Marker, Polyline } from 'react-native-maps';
 import * as Location from 'expo-location';
+<<<<<<< HEAD
 import * as Haptics from 'expo-haptics';
 import { GOOGLE_MAPS_APIKEY } from '@env';
 import { LinearGradient } from 'expo-linear-gradient';
 import { rideMatchingService } from '../services/rideMatchingService';
 import { notificationService } from '../services/notificationService';
+=======
+import { GOOGLE_MAPS_APIKEY } from '@env';
+import { LinearGradient } from 'expo-linear-gradient';
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
 
 const { width, height } = Dimensions.get('window');
 
@@ -153,9 +158,14 @@ const mapStyle = [
   }
 ];
 
+<<<<<<< HEAD
 // Données fictives pour le chauffeur (fallback)
 // Updated to fix driverData reference error
 const fallbackDriverData = {
+=======
+// Données fictives pour le chauffeur
+const driverData = {
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
   name: "Anderson",
   rating: 4.9,
   licensePlate: "3M53AF2",
@@ -191,6 +201,7 @@ export default function FindDriverScreen({ route, navigation }) {
   const [rating, setRating] = useState(0);
   const [tip, setTip] = useState(0);
   
+<<<<<<< HEAD
   // États pour le matching automatique
   const [rideRequest, setRideRequest] = useState(null);
   const [assignedDriver, setAssignedDriver] = useState(null);
@@ -200,6 +211,8 @@ export default function FindDriverScreen({ route, navigation }) {
   // Utiliser les données du chauffeur assigné ou les données de fallback
   const driverData = assignedDriver || fallbackDriverData;
   
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
   const mapRef = useRef(null);
   const routeIndexRef = useRef(0);
   const zoomStateRef = useRef('out'); // Pour suivre l'état du zoom
@@ -354,17 +367,29 @@ export default function FindDriverScreen({ route, navigation }) {
   useEffect(() => {
     // Phase 1: Recherche -> Chauffeur trouvé (après 5s)
     const searchTimeout = setTimeout(() => {
+<<<<<<< HEAD
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+=======
+      const PATTERN = [0, 300, 200, 300, 200, 300];
+      Vibration.vibrate(PATTERN);
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
       setFindingState('driverFound');
       
       // Phase 2: Chauffeur trouvé -> Chauffeur arrivé (après 10s)
       const arrivalTimeout = setTimeout(() => {
+<<<<<<< HEAD
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+=======
+        Vibration.vibrate(); // Vibre une fois à l'arrivée
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
         setFindingState('driverArrived');
 
         // Phase 3: Chauffeur arrivé -> En course (après 5s)
         const inTripTimeout = setTimeout(() => {
+<<<<<<< HEAD
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
           setFindingState('inTrip');
         }, 5000); // 5 secondes
         
@@ -583,7 +608,10 @@ export default function FindDriverScreen({ route, navigation }) {
   });
 
   const handleFinishRating = () => {
+<<<<<<< HEAD
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
     console.log(`Rating: ${rating}, Tip: ${tip}`);
     // Animer la sortie et naviguer
     Animated.timing(ratingPanelAnim, {
@@ -688,7 +716,11 @@ export default function FindDriverScreen({ route, navigation }) {
               })}
               <FontAwesome name="car" size={32} color={category === 'luxe' ? '#D4AF37' : '#3B82F6'} />
             </View>
+<<<<<<< HEAD
             <Text style={styles.searchingText}>Recherche d'un conducteur...</Text>
+=======
+            <Text style={styles.searchingText}>Recherche d'un chauffeur...</Text>
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
           </Animated.View>
 
           {/* Panneau unifié avec transitions */}
@@ -730,19 +762,27 @@ export default function FindDriverScreen({ route, navigation }) {
               <View style={styles.actionButtonsContainer}>
                 <TouchableOpacity 
                   style={styles.actionButton}
+<<<<<<< HEAD
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     navigation.navigate('ChatScreen', { driverData, category });
                   }}
+=======
+                  onPress={() => navigation.navigate('ChatScreen', { driverData, category })}
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
                 >
                   <Ionicons name="chatbubble-ellipses-outline" size={26} color="#fff" />
                 </TouchableOpacity>
                 <TouchableOpacity 
                   style={[styles.actionButton, {backgroundColor: 'rgba(255, 107, 107, 0.15)'}]}
+<<<<<<< HEAD
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                     setCancelModalVisible(true);
                   }}
+=======
+                  onPress={() => setCancelModalVisible(true)}
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
                 >
                   <MaterialIcons name="cancel" size={26} color="#FF6B6B" />
                 </TouchableOpacity>
@@ -759,7 +799,11 @@ export default function FindDriverScreen({ route, navigation }) {
             }}>
               <View style={styles.waitingContainer}>
                 <Ionicons name="time-outline" size={50} color="#FFC700" />
+<<<<<<< HEAD
                 <Text style={styles.waitingTitle}>Votre conducteur vous attend</Text>
+=======
+                <Text style={styles.waitingTitle}>Votre chauffeur vous attend</Text>
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
                 <Text style={styles.waitingSubtitle}>
                   Départ dans <Text style={{fontWeight: 'bold'}}>{formatTime(countdown)}</Text>
                 </Text>
@@ -878,6 +922,7 @@ export default function FindDriverScreen({ route, navigation }) {
           
           <View style={styles.starsContainer}>
             {[1, 2, 3, 4, 5].map((star) => (
+<<<<<<< HEAD
               <TouchableOpacity 
                 key={star} 
                 onPress={() => {
@@ -885,6 +930,9 @@ export default function FindDriverScreen({ route, navigation }) {
                   setRating(star);
                 }}
               >
+=======
+              <TouchableOpacity key={star} onPress={() => setRating(star)}>
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
                 <Ionicons 
                   name={rating >= star ? "star" : "star-outline"} 
                   size={40} 
@@ -896,6 +944,7 @@ export default function FindDriverScreen({ route, navigation }) {
 
           <View style={styles.divider} />
 
+<<<<<<< HEAD
           <Text style={styles.tipTitle}>Ajouter un pourboire</Text> 
            <View style={styles.tipOptionsContainer}> 
              {[2000, 5000, 10000].map(amount => ( 
@@ -937,6 +986,35 @@ export default function FindDriverScreen({ route, navigation }) {
               handleFinishRating();
             }}
           >
+=======
+          <Text style={styles.tipTitle}>Ajouter un pourboire</Text>
+          <View style={styles.tipOptionsContainer}>
+            {[2, 5, 10].map(amount => (
+              <TouchableOpacity 
+                key={amount}
+                style={[styles.tipButton, tip === amount && styles.tipButtonSelected]}
+                onPress={() => setTip(amount)}
+              >
+                <Text style={[styles.tipButtonText, tip === amount && styles.tipButtonTextSelected]}>{amount}€</Text>
+              </TouchableOpacity>
+            ))}
+            <View style={styles.customTipContainer}>
+              <TextInput
+                style={styles.customTipInput}
+                placeholder="Autre"
+                placeholderTextColor="#8E8E93"
+                keyboardType="numeric"
+                onChangeText={(text) => setTip(Number(text))}
+              />
+            </View>
+          </View>
+
+          <TouchableOpacity style={styles.submitButton} onPress={handleFinishRating}>
+            <Text style={styles.submitButtonText}>Terminer</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={handleFinishRating}>
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
             <Text style={styles.notNowText}>Pas maintenant</Text>
           </TouchableOpacity>
 
@@ -955,6 +1033,7 @@ export default function FindDriverScreen({ route, navigation }) {
             <Text style={styles.cancelModalSubtitle}>Veuillez sélectionner la raison de votre annulation.</Text>
             
             <View style={styles.cancelReasonsContainer}>
+<<<<<<< HEAD
               {['Le conducteur met trop de temps', 'J\'ai changé d\'avis', 'Problème de prix', 'Le conducteur a demandé d\'annuler', 'Autre'].map((reason, index) => (
                 <TouchableOpacity 
                   key={index} 
@@ -964,11 +1043,16 @@ export default function FindDriverScreen({ route, navigation }) {
                     handleCancellation(reason);
                   }}
                 >
+=======
+              {['Le chauffeur met trop de temps', 'J\'ai changé d\'avis', 'Problème de prix', 'Le chauffeur a demandé d\'annuler', 'Autre'].map((reason, index) => (
+                <TouchableOpacity key={index} style={styles.reasonButton} onPress={() => handleCancellation(reason)}>
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
                   <Text style={styles.reasonButtonText}>{reason}</Text>
                 </TouchableOpacity>
               ))}
             </View>
 
+<<<<<<< HEAD
             <TouchableOpacity 
               style={styles.backButtonModal} 
               onPress={() => {
@@ -976,6 +1060,9 @@ export default function FindDriverScreen({ route, navigation }) {
                 setCancelModalVisible(false);
               }}
             >
+=======
+            <TouchableOpacity style={styles.backButtonModal} onPress={() => setCancelModalVisible(false)}>
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
               <Text style={styles.backButtonModalText}>Retour</Text>
             </TouchableOpacity>
           </View>
@@ -1501,4 +1588,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 16,
   },
+<<<<<<< HEAD
 });
+=======
+}); 
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b

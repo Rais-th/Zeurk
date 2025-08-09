@@ -122,6 +122,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+<<<<<<< HEAD
     backgroundColor: colors.background.primary,
     borderRadius: borderRadius.base,
     paddingHorizontal: spacing.lg,
@@ -132,6 +133,18 @@ const styles = StyleSheet.create({
   focusedContainer: {
     borderColor: 'rgba(255, 255, 255, 0.3)',
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
+=======
+    backgroundColor: colors.background.tertiary,
+    borderRadius: borderRadius.base,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.base,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  focusedContainer: {
+    borderColor: colors.brand.primary,
+    backgroundColor: colors.background.secondary,
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
   },
   searchIcon: {
     marginRight: spacing.sm,
@@ -139,21 +152,33 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     color: colors.text.primary,
+<<<<<<< HEAD
     fontSize: typography.size.body,
     fontWeight: typography.weight.medium,
     letterSpacing: 0.5,
     padding: 0,
+=======
+    fontSize: typography.size.lg,
+    fontWeight: typography.weight.normal,
+    padding: 0, // Remove default padding
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
   },
   clearButton: {
     marginLeft: spacing.sm,
     padding: spacing.xs,
   },
   filterButton: {
+<<<<<<< HEAD
     backgroundColor: colors.background.primary,
     borderRadius: borderRadius.base,
     padding: spacing.lg,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
+=======
+    backgroundColor: colors.background.tertiary,
+    borderRadius: borderRadius.base,
+    padding: spacing.base,
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
     justifyContent: 'center',
     alignItems: 'center',
     minWidth: 48,
@@ -161,4 +186,8 @@ const styles = StyleSheet.create({
   },
 });
 
+<<<<<<< HEAD
 export default SearchBar;
+=======
+export default SearchBar; 
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b

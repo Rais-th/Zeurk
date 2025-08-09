@@ -12,6 +12,7 @@ import {
   Animated,
   LayoutAnimation,
   UIManager,
+<<<<<<< HEAD
   Alert,
   ActivityIndicator,
 } from 'react-native';
@@ -21,6 +22,10 @@ import { doc, deleteDoc } from 'firebase/firestore';
 import { deleteUser } from 'firebase/auth';
 import { firestore, deleteImageFromStorage } from '../config/firebase';
 import * as Haptics from 'expo-haptics';
+=======
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
 
 // Enable LayoutAnimation for Android
 if (Platform.OS === 'android') {
@@ -45,17 +50,26 @@ const DEMO_ADDRESSES = [
 ];
 
 const PreferencesScreen = ({ navigation }) => {
+<<<<<<< HEAD
   const { user } = useAuth();
   const [preferredClass, setPreferredClass] = useState('Standard');
   const [preferredLanguage, setPreferredLanguage] = useState('Français');
   const [selectedPayment, setSelectedPayment] = useState('1');
   const [loading, setLoading] = useState(false);
+=======
+  const [preferredClass, setPreferredClass] = useState('Standard');
+  const [preferredLanguage, setPreferredLanguage] = useState('Français');
+  const [selectedPayment, setSelectedPayment] = useState('1');
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
   const [expandedSections, setExpandedSections] = useState({
     payments: true,
     addresses: false,
     class: false,
     language: false,
+<<<<<<< HEAD
     deleteAccount: false,
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
   });
 
   const toggleSection = (section) => {
@@ -123,6 +137,7 @@ const PreferencesScreen = ({ navigation }) => {
     setPreferredLanguage(language);
   };
 
+<<<<<<< HEAD
   const handleDeleteAccount = async () => {
     if (!user) {
       Alert.alert('Erreur', 'Utilisateur non connecté');
@@ -216,6 +231,8 @@ const PreferencesScreen = ({ navigation }) => {
     );
   };
 
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -344,7 +361,11 @@ const PreferencesScreen = ({ navigation }) => {
                 </Text>
                 {preferredClass === 'Luxe' && (
                   <Text style={styles.classCardDescription}>
+<<<<<<< HEAD
                     Véhicules haut de gamme avec conducteurs professionnels pour une expérience luxueuse
+=======
+                    Véhicules haut de gamme avec chauffeurs professionnels pour une expérience luxueuse
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
                   </Text>
                 )}
               </View>
@@ -436,6 +457,7 @@ const PreferencesScreen = ({ navigation }) => {
             <TouchableOpacity
               style={[
                 styles.classCard,
+<<<<<<< HEAD
                 preferredLanguage === 'English' ? styles.classCardSelected : null
               ]}
               onPress={() => handleLanguageSelection('English')}
@@ -453,11 +475,31 @@ const PreferencesScreen = ({ navigation }) => {
                 {preferredLanguage === 'English' && (
                   <Text style={styles.classCardDescription}>
                     Use the application in English
+=======
+                preferredLanguage === 'Lingala' ? styles.classCardSelected : null
+              ]}
+              onPress={() => handleLanguageSelection('Lingala')}
+            >
+              <View style={[
+                styles.classContent,
+                preferredLanguage === 'Lingala' && styles.classContentSelected
+              ]}>
+                <Text style={[
+                  styles.classCardTitle,
+                  preferredLanguage === 'Lingala' ? styles.classCardTitleSelected : null
+                ]}>
+                  Lingala
+                </Text>
+                {preferredLanguage === 'Lingala' && (
+                  <Text style={styles.classCardDescription}>
+                    Bosalela application na Lingala
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
                   </Text>
                 )}
               </View>
             </TouchableOpacity>
 
+<<<<<<< HEAD
             <View style={[styles.classCard, styles.comingSoonCard]}>
               <View style={styles.classContent}>
                 <Text style={[styles.classCardTitle, styles.comingSoonTitle]}>
@@ -501,6 +543,31 @@ const PreferencesScreen = ({ navigation }) => {
                   <Text style={styles.deleteAccountText}>Supprimer mon compte</Text>
                 </>
               )}
+=======
+            <TouchableOpacity
+              style={[
+                styles.classCard,
+                preferredLanguage === 'Swahili' ? styles.classCardSelected : null
+              ]}
+              onPress={() => handleLanguageSelection('Swahili')}
+            >
+              <View style={[
+                styles.classContent,
+                preferredLanguage === 'Swahili' && styles.classContentSelected
+              ]}>
+                <Text style={[
+                  styles.classCardTitle,
+                  preferredLanguage === 'Swahili' ? styles.classCardTitleSelected : null
+                ]}>
+                  Swahili
+                </Text>
+                {preferredLanguage === 'Swahili' && (
+                  <Text style={styles.classCardDescription}>
+                    Tumia programu kwa Kiswahili
+                  </Text>
+                )}
+              </View>
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
             </TouchableOpacity>
           </View>
         </Section>
@@ -510,6 +577,7 @@ const PreferencesScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
+<<<<<<< HEAD
   comingSoonCard: {
     opacity: 0.5,
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
@@ -522,6 +590,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
   },
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
   container: {
     flex: 1,
     backgroundColor: '#000',
@@ -731,6 +801,7 @@ const styles = StyleSheet.create({
     height: 50,
     opacity: 0.6,
   },
+<<<<<<< HEAD
   deleteAccountContainer: {
     marginTop: 12,
     paddingHorizontal: 16,
@@ -765,3 +836,8 @@ const styles = StyleSheet.create({
 });
 
 export default PreferencesScreen;
+=======
+});
+
+export default PreferencesScreen; 
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b

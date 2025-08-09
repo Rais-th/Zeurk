@@ -13,7 +13,10 @@ import {
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
+<<<<<<< HEAD
 import * as Haptics from 'expo-haptics';
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
 import { GOOGLE_MAPS_APIKEY } from '@env';
 
 const { width, height } = Dimensions.get('window');
@@ -251,7 +254,11 @@ export default function ConfirmPickupScreen({ route, navigation }) {
           await getReverseGeocodedAddress(coords);
         } else {
           const response = await fetch(
+<<<<<<< HEAD
             `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(startLocation)}&key=${GOOGLE_MAPS_APIKEY}`
+=======
+            `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(startLocation)}&components=country:CD&key=${GOOGLE_MAPS_APIKEY}`
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
           );
           const data = await response.json();
           
@@ -308,9 +315,12 @@ export default function ConfirmPickupScreen({ route, navigation }) {
 
   const handleMapRegionChangeComplete = (region) => {
     if (isDraggingMap) {
+<<<<<<< HEAD
       // Retour haptique pour indiquer le changement de position
       Haptics.selectionAsync();
       
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
       // Mettre à jour les coordonnées du marqueur au centre de la carte
       const newCoordinates = {
         latitude: region.latitude,
@@ -448,10 +458,14 @@ export default function ConfirmPickupScreen({ route, navigation }) {
         <View style={styles.navigationRow}>
           <TouchableOpacity 
             style={styles.backButton}
+<<<<<<< HEAD
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               navigation.goBack();
             }}
+=======
+            onPress={() => navigation.goBack()}
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
           >
             <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
@@ -471,10 +485,14 @@ export default function ConfirmPickupScreen({ route, navigation }) {
           
           <TouchableOpacity 
             style={styles.locateButton}
+<<<<<<< HEAD
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               centerMapOnUserLocation();
             }}
+=======
+            onPress={centerMapOnUserLocation}
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
           >
             <Ionicons name="locate" size={24} color="#fff" />
           </TouchableOpacity>
@@ -489,10 +507,14 @@ export default function ConfirmPickupScreen({ route, navigation }) {
         
         <TouchableOpacity 
           style={[styles.confirmButton, category === 'luxe' ? styles.confirmButtonLuxe : styles.confirmButtonStandard]}
+<<<<<<< HEAD
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             handleConfirm();
           }}
+=======
+          onPress={handleConfirm}
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
           disabled={isReverseGeocoding}
         >
           <Text style={[styles.confirmButtonText, category === 'luxe' && styles.confirmButtonTextLuxe]}>
@@ -726,4 +748,8 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     backgroundColor: 'rgba(59, 130, 246, 0.3)',
   },
+<<<<<<< HEAD
 });
+=======
+}); 
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b

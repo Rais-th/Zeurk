@@ -9,7 +9,10 @@ export default {
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
+<<<<<<< HEAD
     "scheme": "zeurk",
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -21,7 +24,10 @@ export default {
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.Zeurk.app",
+<<<<<<< HEAD
       "scheme": "zeurk",
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
       "config": {
         "googleMapsApiKey": process.env.GOOGLE_MAPS_APIKEY
       }
@@ -32,16 +38,22 @@ export default {
         "backgroundColor": "#1a1a1a"
       },
       "package": "com.Zeurk.app",
+<<<<<<< HEAD
       "scheme": "zeurk",
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
       "config": {
         "googleMaps": {
           "apiKey": process.env.GOOGLE_MAPS_APIKEY
         }
+<<<<<<< HEAD
       },
       "notification": {
         "icon": "./assets/notification-icons/notification-icon-96.png",
         "color": "#FF9500",
         "androidCollapsedTitle": "Zeurk"
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
       }
     },
     "web": {
@@ -54,6 +66,7 @@ export default {
         {
           "locationAlwaysAndWhenInUsePermission": "Allow Zeurk to use your location."
         }
+<<<<<<< HEAD
       ],
       [
         "expo-image-picker",
@@ -71,6 +84,9 @@ export default {
       ]
       // Firebase configuration removed for Expo Go compatibility
       // Use web SDK instead of React Native Firebase
+=======
+      ]
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
     ]
   }
 }

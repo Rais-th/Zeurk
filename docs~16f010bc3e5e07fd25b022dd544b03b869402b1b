@@ -1,0 +1,105 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Documentation de l'application Zeurk
+
+## 1. Aperçu du projet
+
+Zeurk est une application mobile de VTC (Voiture de Tourisme avec Chauffeur) qui permet aux utilisateurs de commander une course. L'application gère le processus complet, de la saisie du lieu de départ et de destination au choix du type de véhicule, à la recherche d'un chauffeur, au suivi de la course et au paiement.
+
+## 2. Technologies et bonnes pratiques
+
+- **React Native (avec Expo)** : Framework principal pour le développement d'applications mobiles multiplateformes.
+- **React Navigation** : Pour la gestion de la navigation entre les différents écrans de l'application (Stack Navigator).
+- **APIs Google Maps**:
+    - **Google Places API** : Pour l'autocomplétion des adresses.
+    - **Google Geocoding API** : Pour convertir les adresses en coordonnées.
+    - **Google Directions API** : Pour calculer l'itinéraire et estimer la durée en fonction du trafic.
+- **Expo Location**: Pour accéder à la géolocalisation de l'utilisateur.
+- **React Native Maps**: Pour l'affichage des cartes interactives avec un style personnalisé et des composants optimisés (Polyline, Markers).
+- **react-native-dotenv**: Pour la gestion des variables d'environnement et la sécurisation des clés d'API.
+- **Optimisation des performances**: Utilisation de `React.memo` pour les composants de liste et optimisation des rendus de la carte pour une meilleure fluidité.
+
+## 3. Structure des fichiers
+
+Le code source principal de l'application est organisé comme suit :
+
+- **`App.js`**: Fichier racine qui configure le conteneur de navigation.
+- **`src/screens/`**: Ce répertoire contient tous les écrans de l'application.
+    - **`HomeScreen.js`**: Écran d'accueil.
+    - **`SearchScreen.js`**: Écran de recherche de trajet.
+    - **`RideOptionsScreen.js`**: Écran de sélection des options de course.
+    - **`FindDriverScreen.js`**: Écran de recherche et d'attente du chauffeur.
+    - **`ChatScreen.js`**: Écran de messagerie avec le chauffeur.
+    - **`PaymentScreen.js`**: Écran pour la gestion des méthodes de paiement.
+- **`src/components/`**: Contient les composants réutilisables.
+    - **`RideOptionItem.js`**: Composant optimisé pour afficher une option de course.
+- **`assets/`**: Contient les images, icônes et autres ressources statiques.
+- **`.env`**: Fichier (ignoré par git) pour stocker les clés d'API et autres secrets.
+
+## 4. Flux de l'application
+
+L'application suit un flux de navigation logique pour la commande d'une course :
+
+1.  **`HomeScreen`**: Point d'entrée, affiche la carte et permet de lancer une recherche.
+2.  **`SearchScreen`**: L'utilisateur définit son itinéraire (départ, destination, arrêts).
+3.  **`RideOptionsScreen`**: Affiche l'itinéraire sur la carte et les différentes options de véhicules. L'utilisateur peut y configurer son paiement.
+4.  **`FindDriverScreen`**: Après confirmation, l'application recherche un chauffeur. L'écran affiche une animation d'attente puis les informations du chauffeur une fois trouvé. L'utilisateur peut annuler la course depuis cet écran.
+5.  **`ChatScreen`**: Accessible depuis `FindDriverScreen` pour communiquer avec le chauffeur.
+6.  **Annulation**: Si l'utilisateur annule depuis `FindDriverScreen`, une modale s'ouvre pour demander la raison, puis l'utilisateur est redirigé vers `SearchScreen` (`navigation.pop(2)`).
+
+Voici une représentation visuelle du flux :
+
+```mermaid
+graph TD;
+    A[HomeScreen] --> B[SearchScreen];
+    B --> C[RideOptionsScreen];
+    C --> D[FindDriverScreen];
+    C --> E[PaymentScreen];
+    E --> C;
+    D --> |Annulation| B;
+    D --> F[ChatScreen];
+```
+
+## 5. Description des écrans
+
+### `HomeScreen.js`
+- **Rôle** : Point d'entrée de l'application. Affiche une carte stylisée ("Obsidienne Épurée") avec la position de l'utilisateur.
+- **Fonctionnalités** :
+    - Propose une barre de recherche pour initier une commande, qui redirige vers `SearchScreen`.
+
+### `SearchScreen.js`
+- **Rôle** : Permettre à l'utilisateur de définir son itinéraire.
+- **Fonctionnalités** :
+    - Champs de saisie sécurisés par l'API Google Places (clé stockée dans `.env`).
+    - Possibilité d'ajouter jusqu'à deux arrêts.
+    - Navigation vers `RideOptionsScreen` avec les informations du trajet.
+
+### `RideOptionsScreen.js`
+- **Rôle** : Afficher les options de la course et la carte.
+- **Fonctionnalités** :
+    - Affiche l'itinéraire sur la carte avec une `Polyline` dont la couleur (verte, orange, rouge) s'adapte dynamiquement à la densité du trafic.
+    - Marqueurs de départ et d'arrivée personnalisés.
+    - Affiche une liste d'options de course à l'aide du composant optimisé `RideOptionItem`.
+    - Contient le bouton pour naviguer vers `FindDriverScreen` après confirmation.
+
+### `FindDriverScreen.js`
+- **Rôle** : Gérer la phase de recherche et d'attente du chauffeur.
+- **Fonctionnalités** :
+    - Affiche une animation de "radar" pendant la recherche.
+    - Une fois un chauffeur trouvé, affiche ses informations (nom, véhicule, ETA) et sa position sur la carte.
+    - Permet de contacter le chauffeur ou de discuter via le `ChatScreen`.
+    - Contient la fonctionnalité d'annulation de course avec une modale de confirmation.
+
+### `ChatScreen.js`
+- **Rôle**: Permettre une communication textuelle entre l'utilisateur et le chauffeur.
+- **Fonctionnalités**:
+    - Interface de messagerie standard.
+
+### `PaymentScreen.js`
+- **Rôle** : Gérer les moyens de paiement de l'utilisateur.
+- **Fonctionnalités** :
+    - Permet la sélection et l'ajout de moyens de paiement.
+    - Renvoie l'information à `RideOptionsScreen`.

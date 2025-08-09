@@ -314,6 +314,7 @@ export default function NavigationScreen({ route, navigation }) {
   const startLocationTracking = async () => {
     setIsNavigating(true);
     
+<<<<<<< HEAD
     // Optimize location updates for battery and data usage
     // Using Location.Accuracy.Balanced for a good balance between accuracy and power consumption.
     // timeInterval: minimum time between updates in milliseconds.
@@ -324,6 +325,13 @@ export default function NavigationScreen({ route, navigation }) {
          timeInterval: 5000, // Update every 5 seconds
          distanceInterval: 10, // Update every 10 meters
         
+=======
+    locationSubscription.current = await Location.watchPositionAsync(
+      {
+        accuracy: Location.Accuracy.BestForNavigation,
+        timeInterval: 1000, // Mise à jour chaque seconde
+        distanceInterval: 1, // Mise à jour chaque mètre
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
       },
              (location) => {
          const newCoords = location.coords;
@@ -400,6 +408,7 @@ export default function NavigationScreen({ route, navigation }) {
     }
   };
 
+<<<<<<< HEAD
   // Mettre à jour l'itinéraire si le conducteur dévie
   const updateRouteIfNeeded = (currentLocation) => {
     if (routeCoordinates.length === 0) return;
@@ -408,6 +417,16 @@ export default function NavigationScreen({ route, navigation }) {
     const distanceFromRoute = calculateDistanceFromRoute(currentLocation);
     
     // Si le conducteur dévie de plus de 50 mètres, recalculer l'itinéraire
+=======
+  // Mettre à jour l'itinéraire si le chauffeur dévie
+  const updateRouteIfNeeded = (currentLocation) => {
+    if (routeCoordinates.length === 0) return;
+    
+    // Vérifier si le chauffeur est toujours sur la route
+    const distanceFromRoute = calculateDistanceFromRoute(currentLocation);
+    
+    // Si le chauffeur dévie de plus de 50 mètres, recalculer l'itinéraire
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
     if (distanceFromRoute > 0.0005) { // Approximativement 50 mètres
       console.log('Recalcul de l\'itinéraire - déviation détectée');
       const newRoute = generateRoute(currentLocation, rideData.coordinates);
@@ -1013,4 +1032,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FF3B30',
   },
+<<<<<<< HEAD
 });
+=======
+}); 
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b

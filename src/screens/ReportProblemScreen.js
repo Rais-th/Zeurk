@@ -53,7 +53,11 @@ const ReportProblemScreen = ({ navigation }) => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaType.Images,
       allowsEditing: false,
+<<<<<<< HEAD
       quality: 1.0,
+=======
+      quality: 1,
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
       allowsMultipleSelection: true,
       selectionLimit: 5,
     });
@@ -360,4 +364,8 @@ const styles = StyleSheet.create({
   },
 });
 
+<<<<<<< HEAD
 export default ReportProblemScreen;
+=======
+export default ReportProblemScreen; 
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b

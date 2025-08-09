@@ -10,6 +10,7 @@ import {
   Platform,
   Alert,
   StatusBar,
+<<<<<<< HEAD
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,10 +19,16 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import { useAuth } from '../contexts/AuthContext';
 import { firestore, storage, COLLECTIONS, createUserDocument, getUserDocument, uploadImageToStorage, deleteImageFromStorage } from '../config/firebase';
 import * as Haptics from 'expo-haptics';
+=======
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
 
 const STATUSBAR_HEIGHT = StatusBar.currentHeight || (Platform.OS === 'ios' ? 44 : 0);
 
 const EditProfileScreen = ({ navigation }) => {
+<<<<<<< HEAD
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -106,11 +113,25 @@ const EditProfileScreen = ({ navigation }) => {
     </View>
   );
 
+=======
+  const [loading, setLoading] = useState(false);
+  const [initialProfile, setInitialProfile] = useState({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone_number: '',
+    avatar_url: null,
+    is_verified: false
+  });
+  const [profile, setProfile] = useState(initialProfile);
+
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
   // Vérifier si des modifications ont été apportées
   const hasChanges = () => {
     return JSON.stringify(profile) !== JSON.stringify(initialProfile);
   };
 
+<<<<<<< HEAD
   // Fonction pour uploader une image vers Firebase Storage
   const uploadImage = async (imageUri) => {
     try {
@@ -230,6 +251,39 @@ const EditProfileScreen = ({ navigation }) => {
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
       Alert.alert('Erreur', 'Impossible de mettre à jour votre profil. Veuillez réessayer.');
+=======
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (status !== 'granted') {
+      Alert.alert('Permission refusée', 'Nous avons besoin de votre permission pour accéder à vos photos.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaType.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setProfile(prev => ({ ...prev, avatar_url: result.assets[0].uri }));
+    }
+  };
+
+  const handleSave = () => {
+    try {
+      setLoading(true);
+      // Pour l'instant, on simule juste la sauvegarde
+      setTimeout(() => {
+        Alert.alert('Succès', 'Profil mis à jour avec succès');
+        setInitialProfile(profile); // Mettre à jour le profil initial après la sauvegarde
+        navigation.goBack();
+      }, 1000);
+    } catch (error) {
+      Alert.alert('Erreur', 'Impossible de mettre à jour votre profil');
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
     } finally {
       setLoading(false);
     }
@@ -237,6 +291,7 @@ const EditProfileScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+<<<<<<< HEAD
       {initialLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#fff" />
@@ -275,16 +330,62 @@ const EditProfileScreen = ({ navigation }) => {
                 <Text style={styles.uploadingText}>Upload en cours...</Text>
               )}
             </View>
+=======
+      <ScrollView style={styles.scrollView}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Modifier le profil</Text>
+          <View style={styles.headerRight} /> {/* Espace vide pour maintenir la symétrie */}
+        </View>
+
+        {/* Photo de profil */}
+        <View style={styles.avatarContainer}>
+          <TouchableOpacity onPress={pickImage}>
+            {profile.avatar_url ? (
+              <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
+            ) : (
+              <View style={styles.avatarPlaceholder}>
+                <Ionicons name="person" size={40} color="#fff" />
+              </View>
+            )}
+            <View style={styles.editIconContainer}>
+              <Ionicons name="camera" size={20} color="#fff" />
+            </View>
+          </TouchableOpacity>
+        </View>
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
 
         {/* Champs de formulaire */}
         <View style={styles.form}>
           <View style={styles.inputGroup}>
+<<<<<<< HEAD
             <Text style={styles.label}>Nom complet</Text>
             <TextInput
               style={styles.input}
               value={profile.full_name}
               onChangeText={(text) => setProfile(prev => ({ ...prev, full_name: text }))}
               placeholder="Votre nom complet"
+=======
+            <Text style={styles.label}>Prénom</Text>
+            <TextInput
+              style={styles.input}
+              value={profile.first_name}
+              onChangeText={(text) => setProfile(prev => ({ ...prev, first_name: text }))}
+              placeholder="Votre prénom"
+              placeholderTextColor="#666"
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Nom</Text>
+            <TextInput
+              style={styles.input}
+              value={profile.last_name}
+              onChangeText={(text) => setProfile(prev => ({ ...prev, last_name: text }))}
+              placeholder="Votre nom"
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
               placeholderTextColor="#666"
             />
           </View>
@@ -293,8 +394,13 @@ const EditProfileScreen = ({ navigation }) => {
             <Text style={styles.label}>Numéro de téléphone</Text>
             <TextInput
               style={styles.input}
+<<<<<<< HEAD
               value={profile.phone}
               onChangeText={(text) => setProfile(prev => ({ ...prev, phone: text }))}
+=======
+              value={profile.phone_number}
+              onChangeText={(text) => setProfile(prev => ({ ...prev, phone_number: text }))}
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
               placeholder="Votre numéro"
               placeholderTextColor="#666"
               keyboardType="phone-pad"
@@ -304,12 +410,19 @@ const EditProfileScreen = ({ navigation }) => {
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Email</Text>
             <TextInput
+<<<<<<< HEAD
               style={[styles.input, styles.disabledInput]}
               value={user?.email || ''}
+=======
+              style={styles.input}
+              value={profile.email}
+              onChangeText={(text) => setProfile(prev => ({ ...prev, email: text }))}
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
               placeholder="Votre email"
               placeholderTextColor="#666"
               keyboardType="email-address"
               autoCapitalize="none"
+<<<<<<< HEAD
               editable={false}
             />
             <Text style={styles.helperText}>L'email ne peut pas être modifié</Text>
@@ -347,6 +460,55 @@ const EditProfileScreen = ({ navigation }) => {
             </View>
           )}
         </>
+=======
+            />
+          </View>
+
+          {/* Vérification d'identité */}
+          <TouchableOpacity 
+            style={[
+              styles.verificationButton,
+              profile.is_verified && styles.verifiedButton
+            ]}
+          >
+            <View style={styles.verificationContent}>
+              <Ionicons 
+                name={profile.is_verified ? "shield-checkmark" : "shield-outline"} 
+                size={24} 
+                color="#fff" 
+              />
+              <View style={styles.verificationText}>
+                <Text style={styles.verificationTitle}>
+                  {profile.is_verified ? 'Identité vérifiée' : 'Vérifier mon identité'}
+                </Text>
+                <Text style={styles.verificationSubtitle}>
+                  {profile.is_verified 
+                    ? 'Votre identité a été vérifiée avec succès' 
+                    : 'Ajoutez vos documents d\'identité pour plus de sécurité'}
+                </Text>
+              </View>
+              {!profile.is_verified && (
+                <Ionicons name="chevron-forward" size={24} color="#fff" />
+              )}
+            </View>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+
+      {/* Bouton Enregistrer en bas */}
+      {hasChanges() && (
+        <View style={styles.saveButtonContainer}>
+          <TouchableOpacity 
+            style={[styles.saveButton, loading && styles.saveButtonDisabled]} 
+            onPress={handleSave}
+            disabled={loading}
+          >
+            <Text style={styles.saveButtonText}>
+              {loading ? 'Sauvegarde...' : 'Enregistrer'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
       )}
     </View>
   );
@@ -486,6 +648,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 2,
   },
+<<<<<<< HEAD
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -514,3 +677,8 @@ const styles = StyleSheet.create({
 });
 
 export default EditProfileScreen;
+=======
+});
+
+export default EditProfileScreen; 
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b

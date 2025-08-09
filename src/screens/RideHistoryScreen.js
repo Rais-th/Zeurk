@@ -10,20 +10,78 @@ import {
   Modal,
   Linking,
   Pressable,
+<<<<<<< HEAD
   ActivityIndicator,
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { FontAwesome } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+<<<<<<< HEAD
 import { useRideHistory } from '../hooks/useRideHistory';
 import { useNetworkStatus } from '../utils/networkManager';
 
 const STATUSBAR_HEIGHT = StatusBar.currentHeight || (Platform.OS === 'ios' ? 44 : 0);
 
+=======
+
+const STATUSBAR_HEIGHT = StatusBar.currentHeight || (Platform.OS === 'ios' ? 44 : 0);
+
+// Données temporaires pour la démo
+const DEMO_RIDES = [
+  {
+    id: '1',
+    date: '2024-03-20',
+    time: '14:30',
+    type: 'Standard',
+    price: '15.50',
+    from: 'Place de la République',
+    to: 'Aéroport Charles de Gaulle',
+    driverName: 'Jean Dupont',
+    driverPhone: '+33612345678',
+  },
+  {
+    id: '2',
+    date: '2024-03-18',
+    time: '09:15',
+    type: 'Luxe',
+    price: '45.00',
+    from: 'Avenue des Champs-Élysées',
+    to: 'Tour Eiffel',
+    driverName: 'Marie Curie',
+    driverPhone: '+33698765432',
+  },
+  {
+    id: '3',
+    date: '2024-03-15',
+    time: '20:45',
+    type: 'Standard',
+    price: '12.75',
+    from: 'Gare du Nord',
+    to: 'Montmartre',
+    driverName: 'Pierre Laurent',
+    driverPhone: '+33667890123',
+  },
+  {
+    id: '4',
+    date: '2024-03-12',
+    time: '16:20',
+    type: 'Luxe',
+    price: '38.50',
+    from: 'Le Marais',
+    to: 'Versailles',
+    driverName: 'Sophie Martin',
+    driverPhone: '+33623456789',
+  },
+];
+
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
 const RideHistoryScreen = ({ navigation, route }) => {
   const purpose = route.params?.purpose;
   const [selectedRide, setSelectedRide] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+<<<<<<< HEAD
   
   // Use offline-capable ride history hook
   const { 
@@ -34,6 +92,8 @@ const RideHistoryScreen = ({ navigation, route }) => {
     updateRideRating 
   } = useRideHistory();
   const { isConnected } = useNetworkStatus();
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
 
   // Formater la date
   const formatDate = (dateStr) => {
@@ -114,6 +174,7 @@ const RideHistoryScreen = ({ navigation, route }) => {
         <Text style={styles.headerTitle}>
           {purpose === 'lost_item' ? 'Sélectionnez une course' : 'Historique des courses'}
         </Text>
+<<<<<<< HEAD
         <View style={styles.headerRight}>
           {isOfflineData && (
             <View style={styles.offlineIndicator}>
@@ -152,6 +213,20 @@ const RideHistoryScreen = ({ navigation, route }) => {
           )}
         </ScrollView>
       )}
+=======
+        <View style={styles.headerRight} />
+      </View>
+
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {DEMO_RIDES.map(ride => (
+          <RideCard key={ride.id} ride={ride} />
+        ))}
+      </ScrollView>
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
 
       <Modal
         animationType="slide"
@@ -234,6 +309,7 @@ const styles = StyleSheet.create({
   },
   headerRight: {
     width: 24,
+<<<<<<< HEAD
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -271,6 +347,8 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textAlign: 'center',
     lineHeight: 20,
+=======
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
   },
   scrollView: {
     flex: 1,
@@ -427,4 +505,8 @@ const styles = StyleSheet.create({
   },
 });
 
+<<<<<<< HEAD
 export default RideHistoryScreen;
+=======
+export default RideHistoryScreen; 
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { useState, useEffect, useCallback } from 'react';
 import { useNetworkStatus } from '../utils/networkManager';
 import { mockVehiclesForSale } from '../config/vehicleMarketplace';
@@ -37,6 +38,15 @@ export const useVehicles = () => {
   }, [loadVehicles]);
 
   const addVehicle = useCallback(async (vehicleData) => {
+=======
+import { useState, useCallback } from 'react';
+import { mockVehiclesForSale } from '../config/vehicleMarketplace';
+
+export const useVehicles = () => {
+  const [vehicles, setVehicles] = useState(mockVehiclesForSale);
+
+  const addVehicle = useCallback((vehicleData) => {
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
     const newVehicle = {
       id: `user_${Date.now()}`,
       title: vehicleData.title,
@@ -61,6 +71,7 @@ export const useVehicles = () => {
         verified: true,
         phone: vehicleData.phone,
       },
+<<<<<<< HEAD
       isOffline: !isConnected, // Mark as offline if created while offline
     };
 
@@ -142,3 +153,28 @@ export const useVehicles = () => {
     refreshVehicles: loadVehicles,
   };
 };
+=======
+    };
+
+    setVehicles(prev => [newVehicle, ...prev]);
+    return newVehicle;
+  }, []);
+
+  const removeVehicle = useCallback((vehicleId) => {
+    setVehicles(prev => prev.filter(vehicle => vehicle.id !== vehicleId));
+  }, []);
+
+  const updateVehicle = useCallback((vehicleId, updates) => {
+    setVehicles(prev => prev.map(vehicle => 
+      vehicle.id === vehicleId ? { ...vehicle, ...updates } : vehicle
+    ));
+  }, []);
+
+  return {
+    vehicles,
+    addVehicle,
+    removeVehicle,
+    updateVehicle,
+  };
+}; 
+>>>>>>> 16f010bc3e5e07fd25b022dd544b03b869402b1b
